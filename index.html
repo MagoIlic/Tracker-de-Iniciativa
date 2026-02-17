@@ -30,6 +30,19 @@
         .btn-next { background: #198754; color: white; padding: 0 25px; font-size: 1.05rem; margin-left: 10px; border: none !important; outline: none; }
         .btn-reset { background: #6c757d; color: white; 
         }
+/* Estilo para el botón de la calavera */
+        button[onclick="toggleDead(this)"] {
+            background-color: #fce4e4; /* Un rojo muy clarito de fondo */
+            border: 1px solid #f5c2c7;
+            font-size: 1.2rem;
+            transition: all 0.3s;
+        }
+        
+/* Cuando la fila ya tiene la clase 'is-dead' (el personaje ya murió) */
+        .is-dead button[onclick="toggleDead(this)"] {
+            background-color: #dc3545 !important; /* Rojo intenso */
+            filter: brightness(1.2);
+        }
 
 /* Ajuste para que todos los botones midan lo mismo de alto */
         button {
@@ -619,3 +632,4 @@ let JUGADORES_MEMORIA = JSON.parse(localStorage.getItem('dnd_players')) || [
 </script>
 </body>
 </html>
+
