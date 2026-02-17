@@ -1,0 +1,621 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>DnD Tracker - Master Edition</title>
+    <style>
+        :root { --primary: #8b0000; --bg: #f8f9fa; --player-row: #e3f2fd; --monster-row: #ffffff; }
+        body { 
+            font-family: 'Segoe UI', system-ui, sans-serif; 
+            background: var(--bg); 
+            padding: 15px; 
+            margin: 0; 
+        }
+        .header { 
+            display: flex; 
+            justify-content: space-between; 
+            align-items: center; 
+            margin-bottom: 20px; 
+            background: white; 
+            padding: 15px; 
+            border-radius: 8px; 
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+        h2 { margin: 0; color: var(--primary); }
+        .btn { padding: 8px 16px; border: none; border-radius: 5px; cursor: pointer; font-weight: 600; transition: 0.2s; }
+        .btn-player { background: #0d6efd; color: white; }
+        .btn-monster { background: #dc3545; color: white; }
+        .btn-sort { background: #ffc107; color: black; }
+        .btn-next { background: #198754; color: white; padding: 0 25px; font-size: 1.05rem; margin-left: 10px; border: none !important; outline: none; }
+        .btn-reset { background: #6c757d; color: white; 
+        }
+
+/* Ajuste para que todos los botones midan lo mismo de alto */
+        button {
+            /* Forzamos que la altura sea exacta incluyendo bordes y rellenos */
+            box-sizing: border-box;
+            height: 38px; /* O el alto que prefieras, pero igual para todos */
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            padding: 0 15px;
+            border-radius: 6px;
+            font-weight: bold;
+            border: none;
+            cursor: pointer;
+            /* Aseguramos que la flecha no empuje el botón hacia arriba */
+            line-height: 1; 
+            vertical-align: middle;
+        }
+
+        /* El botón Reset específico */
+        .btn-reset {
+            background-color: #6c757d;
+            color: white;
+            order: -1; /* Esto lo mueve al principio (izquierda) si el padre es flex */
+        }
+        
+/* AJUSTE COLUMNA INICIATIVA */
+        table { 
+            width: auto;
+            border-collapse: collapse; 
+            background: white; 
+            border-radius: 8px; 
+            overflow: hidden; 
+            table-layout: auto; 
+            margin: 0 auto;
+        }
+
+        th:first-child, td:first-child { width: 50px; padding: 5px; }
+
+/* Estilo para que todos los inputs numéricos sean "invisibles" */
+        .init-val, .stat-input {
+            background: transparent !important;
+            border: none !important;
+            font-size: 1.1em;
+            font-weight: bold;
+            color: inherit;
+            outline: none;
+            -moz-appearance: textfield; /* Quita flechas en Firefox */
+        }
+
+/* Ajuste de las columnas de CONDICIONES y EFECTOS */
+/* La 5ta y 6ta columna ahora tendrán un ancho mínimo mayor */
+        th:nth-child(5), td:nth-child(5),
+        th:nth-child(6), td:nth-child(6) {
+            min-width: 250px; /* Aquí puedes ajustar el ancho a tu gusto */
+            width: 300px;     /* Ancho sugerido para que quepan varios tags */
+            white-space: normal; /* Permite que los tags bajen a la siguiente línea si hay muchos */
+        }
+
+/* Quitamos la línea en la última columna (Acción) para que se vea más limpio */
+        th:last-child, td:last-child {
+            border-right: none;
+        }
+
+/* Mostrar las flechas solo cuando pasas el ratón por encima (opcional) */
+/* O dejar que aparezcan sutilmente para poder clickar */
+        .init-val:hover, .stat-input:hover {
+            background: rgba(0,0,0,0.05) !important;
+            border-radius: 4px;
+        }
+
+/* Específicamente para la Vida y CA para que no pierdan su color */
+        .hp-val { color: #27ae60; width: 45px; }
+        .ca-val { color: #555; width: 35px; }
+        .init-val { 
+            width: 40px; 
+            color: #333; 
+            padding: 2px 4px !important;
+            height: 24px;
+        }
+
+        th { 
+            background: #343a40; 
+            color: white; 
+            padding: 4px 10px !important; 
+            font-size: 0.8em; 
+            text-transform: uppercase; 
+            border-right: 1px solid rgba(0,0,0,0.08); 
+            white-space: nowrap;
+        }
+        td { 
+            border-bottom: 1px solid #dee2e6; 
+            padding: 4px 10px !important; 
+            text-align: center; 
+            vertical-align: middle; 
+            height: 40px; 
+        }
+        .row-player { background-color: var(--player-row); }
+        .row-monster { background-color: var(--monster-row); }
+        input[type="text"], input[type="number"] { 
+            padding: 6px; 
+            border: 1px solid #ced4da; 
+            border-radius: 4px; 
+        }
+        .name-input { width: 180px; font-weight: bold; background: transparent; border: none;  }
+        
+/* Contenedor para que el icono y el número estén alineados */
+/* Esto fuerza a que el contenido de la celda no se divida en dos líneas */
+        td:nth-child(3) {
+            white-space: nowrap; 
+            min-width: 150px; /* Le damos un poco más de espacio a esta columna */
+        }
+
+/* El contenedor de cada icono + input */
+        .stat-container {
+            display: inline-flex;
+            align-items: center;
+            gap: 3px;
+            margin: 0 3px; /* Espacio horizontal entre el grupo de Vida y el de CA */
+        }
+
+/* Estilo para los iconos */
+        .stat-icon {
+            font-size: 0.9em;
+        }
+
+/* Estilo mejorado para los inputs de números */
+        .stat-input {
+            width: 42px;
+            text-align: center;
+            padding: 2px 4px;
+            border: 1px solid #ced4da;
+            border-radius: 6px;
+            font-weight: bold;
+            height: 24px;
+        }
+
+/* Color especial cuando enfocas el HP (Verde vida) */
+        .hp-val:focus {
+            border-color: #27ae60;
+            outline: none;
+            box-shadow: 0 0 5px rgba(39, 174, 96, 0.3);
+        }
+
+/* Color especial cuando enfocas la CA (Azul armadura) */
+        .ca-val:focus {
+            border-color: #2980b9;
+            outline: none;
+            box-shadow: 0 0 5px rgba(41, 128, 185, 0.3);
+        }
+
+        .tag-container { 
+            display: flex; 
+            flex-wrap: wrap; gap: 4px; 
+            min-height: 20px; 
+            margin-top: 5px; 
+            justify-content: center; 
+        }
+        .tag { 
+            padding: 2px 8px; 
+            border-radius: 12px; 
+            font-size: 0.75em; 
+            display: flex; 
+            align-items: center; 
+            gap: 5px; 
+            border: 1px solid rgba(0,0,0,0.1); 
+        }
+        .tag.condition { background: #f8d7da; color: #842029; }
+        .tag.effect { background: #cfe2ff; color: #084298; }
+        .tag-close { cursor: pointer; font-weight: bold; }
+
+        .select-mini {
+            width: auto;
+            min-width: 120px;
+            padding: 4px 20px 4px 4px; /* Espacio a la derecha para la flecha */
+            font-size: 0.85em;
+            border: none !important;
+            background: transparent !important;
+            color: #888;
+            cursor: pointer;
+            outline: none;
+            font-weight: 500;
+            
+/* Flecha personalizada usando una imagen de fondo (un triángulo simple) */
+            appearance: none;
+            -webkit-appearance: none;
+            background-image: url("data:image/svg+xml;charset=UTF-8,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 24 24' fill='none' stroke='%23888' stroke-width='3' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpolyline points='6 9 12 15 18 9'%3E%3C/polyline%3E%3C/svg%3E") !important;
+            background-repeat: no-repeat !important;
+            background-position: right 2px center !important;
+        }
+
+        .select-mini:hover {
+            color: var(--primary);
+            background-color: rgba(0,0,0,0.03) !important;
+            border-radius: 4px;
+        }
+
+
+        .active-row { 
+            outline: 4px solid #ffc107; 
+            outline-offset: -4px; 
+            background-color: #fff9db !important; 
+        }
+        .is-dead { opacity: 0.4; filter: grayscale(1); }
+
+/* Eliminamos el tamaño de fuente ya que no hay texto, y alineamos en fila */
+        .status-checks { 
+            display: flex; 
+            gap: 12px; 
+            justify-content: center; 
+            align-items: center; 
+        }
+
+/* Cambiamos 'column' por 'row' para que el checkbox no busque espacio arriba/abajo */
+        .status-checks label { 
+            display: flex; 
+            flex-direction: row; 
+            align-items: center; 
+            cursor: pointer; 
+        }
+
+/* Colores específicos (se mantienen igual) */
+        .check-a { accent-color: #27ae60 !important; }
+        .check-d { accent-color: #e74c3c !important; }
+        .check-c { accent-color: #f1c40f !important; }
+        .check-r { accent-color: #3498db !important; }
+
+
+
+/* ESTILOS DEL MODAL PERSONALIZADO */
+        #modal-overlay { 
+            display: none; 
+            position: fixed; top: 0; left: 0; width: 100%; height: 100%; 
+            background: rgba(0,0,0,0.6); 
+            z-index: 999; 
+            backdrop-filter: blur(2px); 
+        }
+        #custom-modal { 
+            display: none; 
+            position: fixed; top: 50%; left: 50%; 
+            transform: translate(-50%, -50%); 
+            background: white; padding: 25px; 
+            border-radius: 12px; 
+            box-shadow: 0 10px 30px rgba(0,0,0,0.3); 
+            z-index: 1000; 
+            text-align: center; 
+            border: 2px solid var(--primary); 
+        }
+        .modal-btns { 
+            display: flex; 
+            gap: 12px; 
+            justify-content: center; 
+            margin-top: 20px; 
+        }
+        .stat-container {
+            display: inline-flex;
+            align-items: center;
+            gap: 3px;
+            margin-bottom: 4px;
+        }
+        .stat-icon { font-size: 1em; }
+        .stat-input { width: 40px; text-align: center; border-radius: 4px; border: 1px solid #ccc; }
+    </style>
+</head>
+<body>
+
+<div class="header">
+    <h2>⚔️ Ronda <span id="round-count">1</span></h2>
+    <div style="display: flex; gap: 10px; align-items: center;">
+        <button class="btn btn-player" onclick="addRow('', '', '', 0, true)">+ Jugador</button>
+        <button class="btn btn-monster" onclick="addRow('', '', '', 0, false)">+ Monstruo</button>
+        <button class="btn btn-sort" onclick="sortInit()">📜 Ordenar</button>
+        <button class="btn btn-next" onclick="nextTurn()">Siguiente ⮕</button>
+        <button class="btn btn-reset" onclick="resetCombat()">Reset</button>
+        <button class="btn" style="background: #23BAC4 !important; color: white;" onclick="openPlayersModal()">👥 Gestionar Jugadores</button>
+        <button class="btn" style="background: #8e44ad; color: white;" onclick="importarJugadores()">📥 Importar Jugadores</button>
+    </div>
+</div>
+
+<table id="init-table">
+    <thead>
+        <tr>
+            <th style="width: 60px;">Inic.</th>
+            <th>Nombre</th>
+            <th style="width: 140px;">Vida / CA</th>
+            <th style="width: 130px;">R | C | A | D</th>
+            <th style="width: 220px;">Condiciones</th>
+            <th style="width: 220px;">Efectos</th>
+            <th style="width: 80px;">Acción</th>
+        </tr>
+    </thead>
+    <tbody id="table-body"></tbody>
+</table>
+
+<div id="modal-overlay"></div>
+<div id="custom-modal">
+    <h3 style="margin-top:0; color:var(--primary);">Opciones de Reset</h3>
+    <p>¿Qué deseas hacer con la vida de los jugadores?</p>
+    <div class="modal-btns">
+        <button class="btn" style="background:#27ae60; color:white;" onclick="confirmReset(true)">Mantener Vida</button>
+        <button class="btn" style="background:#8b0000; color:white;" onclick="confirmReset(false)">Resetear Vida</button>
+        <button class="btn" style="background:#6c757d; color:white;" onclick="closeModal()">Cancelar</button>
+    </div>
+</div>
+
+<div id="players-modal-overlay" style="display:none; position:fixed; top:0; left:0; width:100%; height:100%; background:rgba(0,0,0,0.6); z-index:1001;"></div>
+<div id="players-modal" style="display:none; position:fixed; top:50%; left:50%; transform:translate(-50%, -50%); background:white; padding:20px; border-radius:12px; box-shadow:0 10px 30px rgba(0,0,0,0.3); z-index:1002; width: 400px;">
+    <h3 style="margin-top:0; color:#2c3e50;">Configurar Jugadores Base</h3>
+    <p style="font-size: 0.8em; color: #666;">Estos personajes se cargarán automáticamente al iniciar o resetear.</p>
+    
+    <div id="players-list-editor" style="max-height: 300px; overflow-y: auto; margin-bottom: 15px;">
+        </div>
+
+    <button class="btn" style="background:#eee; width: 100%; margin-bottom: 10px;" onclick="addPlayerToEditor()">+ Añadir Jugador</button>
+    
+    <div class="modal-btns">
+        <button class="btn" style="background:#27ae60; color:white;" onclick="savePlayersConfig()">Guardar y Aplicar</button>
+        <button class="btn" style="background:#6c757d; color:white;" onclick="closePlayersModal()">Cerrar</button>
+    </div>
+</div>
+
+<script>
+    // ==========================================
+    // 🛡️ CONFIGURACIÓN DE TUS JUGADORES
+    // ==========================================
+    //const JUGADORES_BASE = [
+      //  { name: "Lavanda Hojadeté", hp: 55, ca: 18 },
+   ////     { name: "Pícaro", hp: 38, ca: 15 },
+  //      { name: "Bardo", hp: 38, ca: 15 },
+ //       { name: "Ranger", hp: 38, ca: 15 },
+//        { name: "Iñigo", hp: 38, ca: 15 },
+ //       { name: "Mago", hp: 28, ca: 12 }
+//    ];
+    // ==========================================
+
+
+    // 1. Cargar jugadores desde la memoria al iniciar
+let JUGADORES_MEMORIA = JSON.parse(localStorage.getItem('dnd_players')) || [
+    { name: "Lavanda", hp: 50, ca: 15 } // Valores por defecto la primera vez
+];
+
+    function openPlayersModal() {
+        document.getElementById('players-modal-overlay').style.display = 'block';
+        document.getElementById('players-modal').style.display = 'block';
+        renderPlayersEditor();
+    }
+
+    function closePlayersModal() {
+        document.getElementById('players-modal-overlay').style.display = 'none';
+        document.getElementById('players-modal').style.display = 'none';
+    }
+
+// Crea la interfaz de edición dentro del modal
+    function renderPlayersEditor() {
+        const container = document.getElementById('players-list-editor');
+        container.innerHTML = '';
+
+    // 1. Creamos una fila de encabezados para saber qué es cada columna
+        const headerDiv = document.createElement('div');
+        headerDiv.style = "display: flex; gap: 5px; margin-bottom: 5px; padding-right: 25px; font-size: 0.7em; font-weight: bold; color: #888; text-transform: uppercase;";
+        headerDiv.innerHTML = `
+            <span style="flex:2">Nombre del Personaje</span>
+            <span style="width:50px; text-align:center">Vida</span>
+            <span style="width:50px; text-align:center">CA</span>
+        `;
+        container.appendChild(headerDiv);
+    // 2. Dibujamos las filas de los jugadores
+        JUGADORES_MEMORIA.forEach((p, index) => {
+            const div = document.createElement('div');
+            div.style = "display: flex; gap: 5px; margin-bottom: 8px; align-items: center;";
+            div.innerHTML = `
+                <input type="text" value="${p.name}" placeholder="Nombre" style="flex:2" class="edit-name">
+                <input type="number" value="${p.hp}" placeholder="HP" style="width:50px" class="edit-hp">
+                <input type="number" value="${p.ca}" placeholder="CA" style="width:50px" class="edit-ca">
+                <button onclick="this.parentElement.remove()" style="background:none; border:none; color:red; cursor:pointer">✖</button>
+            `;
+            container.appendChild(div);
+        });
+    }
+
+    function addPlayerToEditor() {
+        JUGADORES_MEMORIA.push({ name: "", hp: 10, ca: 10 });
+        renderPlayersEditor();
+    }
+
+    function savePlayersConfig() {
+        const names = document.querySelectorAll('.edit-name');
+        const hps = document.querySelectorAll('.edit-hp');
+        const cas = document.querySelectorAll('.edit-ca');
+        
+        const nuevosJugadores = [];
+        names.forEach((n, i) => {
+            if(n.value.trim() !== "") {
+                nuevosJugadores.push({
+                    name: n.value,
+                    hp: parseInt(hps[i].value) || 0,
+                    ca: parseInt(cas[i].value) || 0
+                });
+            }
+        });
+
+    // Guardar en la memoria local (LocalStorage)
+        localStorage.setItem('dnd_players', JSON.stringify(nuevosJugadores));
+        JUGADORES_MEMORIA = nuevosJugadores;
+        
+        alert("¡Grupo guardado en la memoria!");
+        location.reload(); // Recargamos para aplicar cambios
+    }   
+
+// Modifica tu window.onload para usar la memoria
+    window.onload = () => {
+        JUGADORES_MEMORIA.forEach(p => addRow(p.name, p.hp, p.ca, 0, true));
+    };
+
+    let round = 1;
+    let turnIndex = -1;
+
+    const CONDICIONES = ["🕶️Cegado", "💘Hechizado", "🔇Sordo", "🔋Agotado", "😱Asustado", "🕸️Agarrado", "🚫Incapacitado", "🌫️Invisible", "⚡Paralizado", "🗿Petrificado", "🧪Envenenado", "📉Derribado", "⛓️Apresado", "🌀Aturdido", "💤Inconsciente","🩸Sangrante"];
+    const EFECTOS = [
+        "🙏Bendición", "🥀Perdición", "🛡️Escudo de Fe", "💢Furia", "⏳Ralentizar", 
+        "👟Acelerar", "🏹Marca del Cazador", "🧚Fuego Feérico", "🌫️Invisibilidad",
+        "🪽Vuelo", "🔥En Llamas", "💧Sumergido", "🎵Inspiración Bárdica", "✨Guía", 
+        "🐺Transformación", "💀Muriendo", "👻Protectores Ancestrales", "💎Armadura de Mago", 
+        "⛪Santuario", "❄️Armadura de Agathys", "🐢Defensa de Caparazón", "❓Confundido", 
+        "🐻Resistencia del Oso", "🐂Fuerza del Toro", "🐈Gracia del Gato", "🦅Esplendor del Águila", 
+        "🦊Astucia del Fox", "🦉Sabiduría del Búho", "💨Esquivar", "🌓Parpadeo", 
+        "💥Hoja Retumbante", "🩸Maldición de Sangre", "〰️Borroso", "😨Causar Miedo", 
+        "⚔️Duelo Obligado", "👼Favor Divino", "💜Maleficio", "🗡️Maldición de Filo", 
+        "🎯Presa del Cazador", "🧠Lucha Perspicaz", "👥Imagen Espejo", "🖤Poseído", 
+        "❤️Estabilizado", "🪄Invocación", "🍄Entidad Simbiótica", "🔗Vínculo de Protección"
+    ];
+
+    function addRow(name = "", hp = "", ca = "", init = 0, isPlayer = false) {
+        const tbody = document.getElementById('table-body');
+        const tr = document.createElement('tr');
+        tr.className = isPlayer ? 'row-player' : 'row-monster';
+        tr.dataset.isPlayer = isPlayer;
+        tr.dataset.baseHp = hp;
+
+        tr.innerHTML = `
+            <td><input type="number" class="init-val" value="${init}"></td>
+            <td><input type="text" class="name-input" value="${name}" placeholder="${isPlayer ? 'Jugador' : 'Monstruo'}"></td>
+            <td>
+                <div class="stat-container">
+                    <span class="stat-icon">❤️</span>
+                    <input type="number" class="stat-input hp-val" placeholder="HP" value="${hp}">
+                </div>
+                <div class="stat-container">
+                    <span class="stat-icon">🛡️</span>
+                    <input type="number" class="stat-input ca-val" placeholder="CA" value="${ca}">
+                </div>
+            </td>
+            <td>
+                <div class="status-checks">
+                    <label><input type="checkbox" class="check-r"></label>
+                    <label><input type="checkbox" class="check-c"></label>
+                    <label><input type="checkbox" class="check-a"></label>
+                    <label><input type="checkbox" class="check-d"></label>
+                </div>
+            </td>
+            <td>
+                <select class="select-mini" onchange="addTag(this, 'condition')">
+                    <option value="">+ Condición</option>
+                    ${CONDICIONES.map(c => `<option value="${c}">${c}</option>`).join('')}
+                </select>
+                <div class="tag-container"></div>
+            </td>
+            <td>
+                <select class="select-mini" onchange="addTag(this, 'effect')">
+                    <option value="">+ Efecto</option>
+                    ${EFECTOS.map(e => `<option value="${e}">${e}</option>`).join('')}
+                </select>
+                <div class="tag-container"></div>
+            </td>
+            <td>
+                <button onclick="toggleDead(this)" title="Muerto">💀</button>
+                <button onclick="removeRow(this, ${isPlayer})" style="color:${isPlayer ? '#bbb' : 'red'}; background:none; border:none; cursor:pointer; font-weight:bold; margin-left:5px">✖</button>
+            </td>
+        `;
+        tbody.appendChild(tr);
+    }
+
+    function removeRow(btn, isPlayer) {
+        if (isPlayer && !confirm("¿Eliminar a este JUGADOR permanentemente?")) return;
+        btn.parentElement.parentElement.remove();
+        updateHighlight();
+    }
+
+    function addTag(select, type) {
+        if (!select.value) return;
+        const container = select.nextElementSibling;
+        const tag = document.createElement('div');
+        tag.className = `tag ${type}`;
+        tag.innerHTML = `${select.value} <span class="tag-close" onclick="this.parentElement.remove()">×</span>`;
+        container.appendChild(tag);
+        select.value = "";
+    }
+
+    function sortInit() {
+        const tbody = document.getElementById('table-body');
+        const rows = Array.from(tbody.rows);
+        rows.sort((a, b) => (parseInt(b.querySelector('.init-val').value) || 0) - (parseInt(a.querySelector('.init-val').value) || 0));
+        rows.forEach(r => tbody.appendChild(r));
+        turnIndex = 0;
+        updateHighlight();
+    }
+
+    function nextTurn() {
+        const rows = Array.from(document.querySelectorAll('#table-body tr')).filter(r => !r.classList.contains('is-dead'));
+        if (rows.length === 0) return;
+        turnIndex++;
+        if (turnIndex >= rows.length) {
+            turnIndex = 0;
+            round++;
+            document.getElementById('round-count').innerText = round;
+            document.querySelectorAll('.check-r').forEach(c => c.checked = false);
+        }
+        updateHighlight();
+    }
+
+    function updateHighlight() {
+        const rows = Array.from(document.querySelectorAll('#table-body tr')).filter(r => !r.classList.contains('is-dead'));
+        document.querySelectorAll('tr').forEach(r => r.classList.remove('active-row'));
+        if (rows[turnIndex]) rows[turnIndex].classList.add('active-row');
+    }
+
+    function toggleDead(btn) {
+        btn.parentElement.parentElement.classList.toggle('is-dead');
+        updateHighlight();
+    }
+
+    function resetCombat() {
+        document.getElementById('modal-overlay').style.display = 'block';
+        document.getElementById('custom-modal').style.display = 'block';
+    }
+
+    function closeModal() {
+        document.getElementById('modal-overlay').style.display = 'none';
+        document.getElementById('custom-modal').style.display = 'none';
+    }
+
+    function confirmReset(keepHp) {
+        const tbody = document.getElementById('table-body');
+        Array.from(tbody.rows).forEach(row => {
+            if (row.dataset.isPlayer === "true") {
+                row.querySelector('.init-val').value = 0;
+                row.querySelectorAll('input[type="checkbox"]').forEach(cb => cb.checked = false);
+                row.querySelectorAll('.tag-container').forEach(tc => tc.innerHTML = '');
+                row.classList.remove('is-dead', 'active-row');
+                if (!keepHp) row.querySelector('.hp-val').value = row.dataset.baseHp;
+            } else {
+                row.remove();
+            }
+        });
+        round = 1; turnIndex = -1;
+        document.getElementById('round-count').innerText = "1";
+        closeModal();
+    }
+
+    window.onload = () => {
+        JUGADORES_BASE.forEach(p => addRow(p.name, p.hp, p.ca, 0, true));
+    };
+
+    function importarJugadores() {
+    // 1. Preguntar para no borrar monstruos por accidente
+    if (!confirm("¿Deseas cargar los jugadores guardados? (Esto no borrará a los monstruos actuales)")) return;
+
+    // 2. Obtener los datos más recientes de la memoria
+    const guardados = JSON.parse(localStorage.getItem('dnd_players')) || [];
+    
+    if (guardados.length === 0) {
+        alert("No hay jugadores guardados en la memoria. Ve a 'Gestionar Grupo' primero.");
+        return;
+    }
+
+    // 3. Añadirlos a la tabla
+    guardados.forEach(p => {
+        // Verificamos si ya existe alguien con ese nombre para no duplicar (opcional)
+        const existe = Array.from(document.querySelectorAll('.name-input'))
+                            .some(input => input.value === p.name);
+        
+        if (!existe) {
+            addRow(p.name, p.hp, p.ca, 0, true);
+        }
+    });
+}
+</script>
+</body>
+</html>
