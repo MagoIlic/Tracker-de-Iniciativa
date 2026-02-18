@@ -1,0 +1,130 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <title>Vista de Jugadores - Iniciativa</title>
+    <script src="https://unpkg.com/peerjs@1.5.2/dist/peerjs.min.js"></script>
+    <style>
+        body { font-family: sans-serif; background: #2c3e50; color: white; padding: 20px; }
+        table { width: 100%; border-collapse: collapse; background: #34495e; border-radius: 10px; overflow: hidden; }
+        th, td { 
+            padding: 15px; 
+            border-bottom: 1px solid #465c71; 
+        }
+
+        th:nth-child(2),
+        td:nth-child(2) {
+            text-align: center;
+        }
+
+        th { background: #1a252f; text-transform: uppercase; font-size: 0.9em; }
+        .active { background: #f1c40f !important; color: #000; font-weight: bold; }
+        .dead { opacity: 0.3; filter: grayscale(1); }
+        .tag { display: inline-block; background: #2980b9; padding: 2px 8px; border-radius: 10px; font-size: 0.8em; margin: 2px; }
+        .status-pill { padding: 4px 10px; border-radius: 5px; font-weight: bold; font-size: 0.8em; }
+    </style>
+</head>
+<body>
+    <h1>Iniciativa - Ronda <span id="round">1</span></h1>
+    <input type="text" id="join-id" placeholder="Pegar ID del Master aquí">
+    <button onclick="connectToMaster()">Conectar</button>
+
+    <table>
+        <thead>
+            <tr>
+                <th>Personaje</th>
+                <th>Daño Recibido / Estado</th>
+                <th>Efectos</th>
+            </tr>
+        </thead>
+        <tbody id="player-table"></tbody>
+    </table>
+
+    <script>
+        // Usar configuración limpia por defecto
+        const peer = new Peer();
+        let activeConn;
+
+        function connectToMaster() {
+            const id = document.getElementById('join-id').value.trim();
+            if (!id) return;
+            
+            // Forzamos conexión fiable para evitar que la consola se quede "en blanco"
+            activeConn = peer.connect(id, { reliable: true });
+
+            activeConn.on('open', () => {
+                document.querySelector('button').innerText = "✅ CONECTADO";
+                document.querySelector('button').style.background = "#27ae60";
+            });
+
+            activeConn.on('data', (data) => {
+                // Añadimos un log para ver si llega algo
+                console.log("¡Llegaron datos!");
+                document.getElementById('round').innerText = data.round;
+                renderTable(data.combatants);
+            });
+        }
+
+        function renderTable(combatants) {
+            // ESTA LÍNEA ES LA QUE FALTA:
+            const tableBody = document.getElementById('player-table'); 
+            
+            if (!tableBody) return; // Seguridad
+            tableBody.innerHTML = '';
+            
+            combatants.forEach(c => {
+                const tr = document.createElement('tr');
+                if (c.isActive) tr.classList.add('active');
+                if (c.isDead) tr.classList.add('dead');
+
+                let hpInfo = "";
+
+                    if (!c.isPlayer) {
+                        const percent = c.maxHp > 0 ? (c.currentHp / c.maxHp) * 100 : 100;
+
+                        let estado = "";
+                        let color = "";
+
+                        if (percent < 10) {
+                            estado = "Moribundo";
+                            color = "#000000";
+                        } else if (percent < 50) {
+                            estado = "Sangrando";
+                            color = "#ff0000";
+                        } else if (percent < 100) {
+                            estado = "Herido";
+                            color = "#ff8c00";
+                        } else {
+                            estado = "Ileso";
+                            color = "#27ae60";
+                        }
+
+                        hpInfo = `
+                            <b>${c.damageTaken} 💥</b>
+                            <span class="status-pill" style="background:${color}; color:white;">
+                                ${estado}
+                            </span>
+                        `;
+                    }
+
+
+
+                tr.innerHTML = `
+                    <td>
+                        <div>${c.name}</div>
+                        <div style="font-size:0.7em; opacity:0.7">
+                            ${c.checks.r ? '[R]' : ''} ${c.checks.c ? '[C]' : ''} ${c.checks.a ? '[A]' : ''} ${c.checks.d ? '[D]' : ''}
+                        </div>
+                    </td>
+                    <td>${hpInfo}</td>
+                    <td>
+                        ${c.tags.conditions.map(t => `<span class="tag" style="background:#842029; color:white;">${t}</span>`).join('')}
+                        ${c.tags.effects.map(t => `<span class="tag" style="background:#084298; color:white;">${t}</span>`).join('')}
+                    </td>
+                `;
+                tableBody.appendChild(tr);
+            });
+        }
+    </script>
+</body>
+</html>
