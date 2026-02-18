@@ -33,7 +33,12 @@
         <thead>
             <tr>
                 <th>Combatiente</th>
-                <th>R | C | A | D</th>
+                <th style="text-align:center;">
+                    <span style="color:white;">R</span>
+                    <span style="color:#f1c40f;">C</span>
+                    <span style="color:#2ecc71;">A</span>
+                    <span style="color:#e74c3c;">D</span>
+                </th>
                 <th>Daño Recibido | Estado</th>
                 <th>Condiciones</th>
                 <th>Efectos</th>
@@ -116,12 +121,13 @@
                         <div>${c.name}</div>
                     </td>
 
-                    <td style="text-align:center; font-weight:bold;">
-                        ${c.checks.r ? 'R ' : ''}
-                        ${c.checks.c ? 'C ' : ''}
-                        ${c.checks.a ? 'A ' : ''}
-                        ${c.checks.d ? 'D' : ''}
+                    <td style="text-align:center;">
+                        ${c.checks.r ? '<span style="color:white; font-size:18px;">●</span>' : ''}
+                        ${c.checks.c ? '<span style="color:#f1c40f; font-size:18px;">●</span>' : ''}
+                        ${c.checks.a ? '<span style="color:#2ecc71; font-size:18px;">●</span>' : ''}
+                        ${c.checks.d ? '<span style="color:#e74c3c; font-size:18px;">●</span>' : ''}
                     </td>
+
 
                     <td>${hpInfo}</td>
 
