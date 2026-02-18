@@ -4,6 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>DnD Tracker - Master Edition</title>
+    <script src="https://unpkg.com/peerjs@1.5.2/dist/peerjs.min.js"></script>
     <style>
         :root { --primary: #8b0000; --bg: #f8f9fa; --player-row: #e3f2fd; --monster-row: #ffffff; }
         body { 
@@ -313,7 +314,7 @@
     <h2>⚔️ Ronda <span id="round-count">1</span></h2>
     <div style="display: flex; gap: 10px; align-items: center;">
         <button class="btn btn-player" onclick="addRow('', '', '', 0, true)">+ Jugador</button>
-        <button class="btn btn-monster" onclick="addRow('', '', '', 0, false)">+ Monstruo</button>
+        <button class="btn btn-monster" onclick="openMonsterModal()">+ Monstruo</button>
         <button class="btn btn-sort" onclick="sortInit()">📜 Ordenar</button>
         <button class="btn btn-next" onclick="nextTurn()">Siguiente ⮕</button>
         <button class="btn btn-reset" onclick="resetCombat()">Reset</button>
@@ -364,19 +365,27 @@
     </div>
 </div>
 
+<div id="monster-modal-overlay" style="display:none; position:fixed; top:0; left:0; width:100%; height:100%; background:rgba(0,0,0,0.6); z-index:1100;"></div>
+
+<div id="monster-modal" style="display:none; position:fixed; top:50%; left:50%; transform:translate(-50%, -50%); background:white; padding:20px; border-radius:12px; box-shadow:0 10px 30px rgba(0,0,0,0.3); z-index:1101; width:420px; max-height:80vh; overflow-y:auto;">
+    
+    <h3 style="margin-top:0;">Agregar Monstruos</h3>
+
+    <div id="monster-form-container">
+        <!-- Aquí se insertarán las filas dinámicamente -->
+    </div>
+
+    <button class="btn" style="background:#eee; width:100%; margin-top:10px;" onclick="duplicateMonster()">+ Añadir otro igual</button>
+
+    <div style="display:flex; gap:10px; margin-top:15px;">
+        <button class="btn" style="background:#27ae60; color:white; flex:1;" onclick="confirmMonsterCreation()">Aceptar</button>
+        <button class="btn" style="background:#6c757d; color:white; flex:1;" onclick="closeMonsterModal()">Cancelar</button>
+    </div>
+
+</div>
+
+
 <script>
-    // ==========================================
-    // 🛡️ CONFIGURACIÓN DE TUS JUGADORES
-    // ==========================================
-    //const JUGADORES_BASE = [
-      //  { name: "Lavanda Hojadeté", hp: 55, ca: 18 },
-   ////     { name: "Pícaro", hp: 38, ca: 15 },
-  //      { name: "Bardo", hp: 38, ca: 15 },
- //       { name: "Ranger", hp: 38, ca: 15 },
-//        { name: "Iñigo", hp: 38, ca: 15 },
- //       { name: "Mago", hp: 28, ca: 12 }
-//    ];
-    // ==========================================
 
 
     // 1. Cargar jugadores desde la memoria al iniciar
@@ -523,12 +532,127 @@ let JUGADORES_MEMORIA = JSON.parse(localStorage.getItem('dnd_players')) || [
             </td>
         `;
         tbody.appendChild(tr);
+        broadcastData();
+        tr.querySelectorAll('input').forEach(input => {
+            input.addEventListener('input', broadcastData);
+            input.addEventListener('change', broadcastData);
+        });
     }
+
+    let monsterCount = 1;
+
+    function openMonsterModal() {
+        monsterCount = 1;
+
+        document.getElementById('monster-modal-overlay').style.display = 'block';
+        document.getElementById('monster-modal').style.display = 'block';
+
+        const container = document.getElementById('monster-form-container');
+        container.innerHTML = '';
+
+        addMonsterFormRow(true);
+    }
+
+    function closeMonsterModal() {
+        document.getElementById('monster-modal-overlay').style.display = 'none';
+        document.getElementById('monster-modal').style.display = 'none';
+    }
+
+    function addMonsterFormRow(isFirst = false) {
+        const container = document.getElementById('monster-form-container');
+
+        const row = document.createElement('div');
+        row.style.border = "1px solid #ddd";
+        row.style.padding = "10px";
+        row.style.marginBottom = "10px";
+        row.style.borderRadius = "8px";
+
+        row.innerHTML = `
+                <div style="display:flex; gap:6px; align-items:center;">
+                    <input type="text" class="monster-name" placeholder="Nombre" style="flex:1;">
+                    <input type="number" class="monster-hp" placeholder="HP" style="width:60px;">
+                    <input type="number" class="monster-ac" placeholder="CA" style="width:55px;">
+                    <input type="number" class="monster-init" placeholder="Init" style="width:60px;">
+                </div>
+        `;
+
+        container.appendChild(row);
+
+        // Si no es el primero, numeramos
+        if (!isFirst) {
+            monsterCount++;
+            const baseName = container.querySelector('.monster-name').value.trim();
+            const nameInput = row.querySelector('.monster-name');
+
+            if (baseName !== "") {
+                nameInput.value = baseName + " " + monsterCount;
+            }
+        }
+    }
+
+    function duplicateMonster() {
+        const container = document.getElementById('monster-form-container');
+        const firstRow = container.querySelector('div');
+
+        if (!firstRow) return;
+
+        const baseName = firstRow.querySelector('.monster-name').value.trim();
+        const baseHp = firstRow.querySelector('.monster-hp').value;
+        const baseAc = firstRow.querySelector('.monster-ac').value;
+
+        monsterCount++;
+
+        const row = document.createElement('div');
+        row.style.border = "1px solid #ddd";
+        row.style.padding = "10px";
+        row.style.marginBottom = "10px";
+        row.style.borderRadius = "8px";
+
+        row.innerHTML = `
+                <div style="display:flex; gap:6px; align-items:center;">
+                    <input type="text" class="monster-name" value="${baseName ? baseName + ' ' + monsterCount : ''}" style="flex:1;">
+                    <input type="number" class="monster-hp" value="${baseHp}" style="width:60px;">
+                    <input type="number" class="monster-ac" value="${baseAc}" style="width:55px;">
+                    <input type="number" class="monster-init" placeholder="Init" style="width:60px;">
+                </div>
+        `;
+
+        container.appendChild(row);
+    }
+
+   function confirmMonsterCreation() {
+        const container = document.getElementById('monster-form-container');
+        const rows = container.children;
+
+        for (let row of rows) {
+            const name = row.querySelector('.monster-name')?.value.trim();
+            const hp = parseInt(row.querySelector('.monster-hp')?.value) || 0;
+            const ac = parseInt(row.querySelector('.monster-ac')?.value) || 0;
+            const init = parseInt(row.querySelector('.monster-init')?.value) || 0;
+
+            if (!name) continue;
+
+            addRow(name, hp, ac, init, false);
+
+            const tableRows = document.querySelectorAll('#table-body tr');
+            const lastRow = tableRows[tableRows.length - 1];
+
+            lastRow.dataset.baseHp = hp;
+            lastRow.querySelector('.hp-val').value = hp;
+        }
+
+        closeMonsterModal();
+        broadcastData();
+    }
+
+
+
 
     function removeRow(btn, isPlayer) {
         if (isPlayer && !confirm("¿Eliminar a este JUGADOR permanentemente?")) return;
         btn.parentElement.parentElement.remove();
         updateHighlight();
+        broadcastData();
     }
 
     function addTag(select, type) {
@@ -539,6 +663,7 @@ let JUGADORES_MEMORIA = JSON.parse(localStorage.getItem('dnd_players')) || [
         tag.innerHTML = `${select.value} <span class="tag-close" onclick="this.parentElement.remove()">×</span>`;
         container.appendChild(tag);
         select.value = "";
+        broadcastData();
     }
 
     function sortInit() {
@@ -548,6 +673,7 @@ let JUGADORES_MEMORIA = JSON.parse(localStorage.getItem('dnd_players')) || [
         rows.forEach(r => tbody.appendChild(r));
         turnIndex = 0;
         updateHighlight();
+        broadcastData();
     }
 
     function nextTurn() {
@@ -561,22 +687,26 @@ let JUGADORES_MEMORIA = JSON.parse(localStorage.getItem('dnd_players')) || [
             document.querySelectorAll('.check-r').forEach(c => c.checked = false);
         }
         updateHighlight();
+        broadcastData();
     }
 
     function updateHighlight() {
         const rows = Array.from(document.querySelectorAll('#table-body tr')).filter(r => !r.classList.contains('is-dead'));
         document.querySelectorAll('tr').forEach(r => r.classList.remove('active-row'));
         if (rows[turnIndex]) rows[turnIndex].classList.add('active-row');
+        broadcastData();
     }
 
     function toggleDead(btn) {
         btn.parentElement.parentElement.classList.toggle('is-dead');
         updateHighlight();
+        broadcastData();
     }
 
     function resetCombat() {
         document.getElementById('modal-overlay').style.display = 'block';
         document.getElementById('custom-modal').style.display = 'block';
+        broadcastData();
     }
 
     function closeModal() {
@@ -602,20 +732,17 @@ let JUGADORES_MEMORIA = JSON.parse(localStorage.getItem('dnd_players')) || [
         closeModal();
     }
 
-    window.onload = () => {
-        JUGADORES_BASE.forEach(p => addRow(p.name, p.hp, p.ca, 0, true));
-    };
 
     function importarJugadores() {
     // 1. Preguntar para no borrar monstruos por accidente
-    if (!confirm("¿Deseas cargar los jugadores guardados? (Esto no borrará a los monstruos actuales)")) return;
+        if (!confirm("¿Deseas cargar los jugadores guardados? (Esto no borrará a los monstruos actuales)")) return;
 
     // 2. Obtener los datos más recientes de la memoria
-    const guardados = JSON.parse(localStorage.getItem('dnd_players')) || [];
-    
-    if (guardados.length === 0) {
-        alert("No hay jugadores guardados en la memoria. Ve a 'Gestionar Grupo' primero.");
-        return;
+        const guardados = JSON.parse(localStorage.getItem('dnd_players')) || [];
+        
+        if (guardados.length === 0) {
+            alert("No hay jugadores guardados en la memoria. Ve a 'Gestionar Grupo' primero.");
+            return;
     }
 
     // 3. Añadirlos a la tabla
@@ -629,8 +756,98 @@ let JUGADORES_MEMORIA = JSON.parse(localStorage.getItem('dnd_players')) || [
         }
     });
 }
+
+// --- SISTEMA DE EMERGENCIA MASTER ---
+let conn;
+let peer;
+
+function reiniciarSistema() {
+    // Si ya existe un objeto peer, lo destruimos para limpiar la red
+    if (peer) {
+        peer.destroy();
+    }
+
+    // Usamos la configuración por defecto (PeerJS se encarga del STUN)
+    // Esto evita errores de sintaxis en la red local
+    peer = new Peer();
+
+    const box = document.getElementById('peer-debug-box') || document.createElement('div');
+    box.id = "peer-debug-box";
+    box.style = "position:fixed; bottom:10px; right:10px; background:#1a1a1a; color:#0f0; padding:15px; border:2px solid #555; z-index:9999; font-family:monospace; border-radius:8px;";
+    box.innerHTML = "🛰️ Conectando con servidor...";
+    if (!document.getElementById('peer-debug-box')) document.body.appendChild(box);
+
+    peer.on('open', (id) => {
+        box.innerHTML = `<div style="color:#aaa; font-size:9px">ID (Clic para copiar):</div><b>${id}</b>`;
+        box.onclick = () => { 
+            navigator.clipboard.writeText(id); 
+            alert("ID Copiado. Pégalo en la tablet."); 
+        };
+    });
+
+    peer.on('connection', (c) => {
+        conn = c;
+        c.on('open', () => {
+            box.style.borderColor = "#27ae60";
+            box.innerHTML = "✅ TABLET DENTRO";
+            if (typeof broadcastData === 'function') {
+                broadcastData(); 
+            }
+        });
+    });
+
+    peer.on('error', (err) => {
+        console.error("Error detectado:", err.type);
+        box.style.color = "red";
+        box.innerHTML = "❌ Reintentando...";
+        setTimeout(reiniciarSistema, 3000); // Auto-reintento si falla
+    });
+}
+
+// Iniciar
+reiniciarSistema();
+
+function broadcastData() {
+    if (!conn || !conn.open) return;
+
+    const rows = Array.from(document.querySelectorAll('#table-body tr'));
+
+    const combatants = rows.map((row, index) => {
+        const isPlayer = row.dataset.isPlayer === "true";
+        const maxHp = parseInt(row.dataset.baseHp) || 0;
+        const currentHp = parseInt(row.querySelector('.hp-val').value) || 0;
+
+        return {
+            name: row.querySelector('.name-input').value,
+            isPlayer,
+            maxHp,
+            currentHp,
+            damageTaken: maxHp - currentHp,
+            isActive: row.classList.contains('active-row'),
+            isDead: row.classList.contains('is-dead'),
+            checks: {
+                r: row.querySelector('.check-r')?.checked || false,
+                c: row.querySelector('.check-c')?.checked || false,
+                a: row.querySelector('.check-a')?.checked || false,
+                d: row.querySelector('.check-d')?.checked || false
+            },
+            tags: {
+                conditions: Array.from(row.querySelectorAll('.tag.condition')).map(t => t.innerText.replace('×','').trim()),
+                effects: Array.from(row.querySelectorAll('.tag.effect')).map(t => t.innerText.replace('×','').trim())
+            }
+        };
+    });
+
+    conn.send({
+        round,
+        combatants
+    });
+}
+
+
 </script>
 </body>
 </html>
+
 
 
