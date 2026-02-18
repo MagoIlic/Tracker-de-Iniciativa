@@ -757,7 +757,7 @@ let JUGADORES_MEMORIA = JSON.parse(localStorage.getItem('dnd_players')) || [
     });
 }
 
-// --- SISTEMA DE EMERGENCIA MASTER ---
+
 let conn;
 let peer;
 
@@ -769,7 +769,9 @@ function reiniciarSistema() {
 
     // Usamos la configuración por defecto (PeerJS se encarga del STUN)
     // Esto evita errores de sintaxis en la red local
-    peer = new Peer();
+    const shortId = "DM-Table-" + Math.floor(1000 + Math.random() * 9000);
+    peer = new Peer(shortId);
+
 
     const box = document.getElementById('peer-debug-box') || document.createElement('div');
     box.id = "peer-debug-box";
@@ -778,18 +780,29 @@ function reiniciarSistema() {
     if (!document.getElementById('peer-debug-box')) document.body.appendChild(box);
 
     peer.on('open', (id) => {
-        box.innerHTML = `<div style="color:#aaa; font-size:9px">ID (Clic para copiar):</div><b>${id}</b>`;
+        box.innerHTML = `
+            <div style="color:#aaa; font-size:10px">ID (clic para copiar)</div>
+            <div style="font-size:20px; font-weight:bold;">${id}</div>
+            <div id="peer-status" style="font-size:11px; color:#f1c40f;">Esperando tablet...</div>
+        `;
+
         box.onclick = () => { 
             navigator.clipboard.writeText(id); 
-            alert("ID Copiado. Pégalo en la tablet."); 
         };
     });
+
 
     peer.on('connection', (c) => {
         conn = c;
         c.on('open', () => {
             box.style.borderColor = "#27ae60";
-            box.innerHTML = "✅ TABLET DENTRO";
+
+            const status = document.getElementById('peer-status');
+            if (status) {
+                status.innerText = "✅ Tablet conectada";
+                status.style.color = "#2ecc71";
+            }
+
             if (typeof broadcastData === 'function') {
                 broadcastData(); 
             }
