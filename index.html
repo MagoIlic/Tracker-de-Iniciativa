@@ -244,6 +244,27 @@
             transform: rotate(360deg) scale(1.2);
         }
 
+        /* Orientación base de las varitas */
+        .wand-vertical{
+            transform: rotate(-45deg);
+            transition: transform 0.3s ease;
+        }
+
+        .wand-horizontal{
+            transform: rotate(45deg);
+            transition: transform 0.3s ease;
+        }
+
+        /* Animación tipo dragón/dado pero respetando orientación */
+        .modal-btn:hover .wand-vertical{
+            transform: rotate(315deg) scale(1.2);
+        }
+
+        .modal-btn:hover .wand-horizontal{
+            transform: rotate(405deg) scale(1.2);
+        }
+
+
         /* Footer con créditos sutiles */
         .footer {
             margin-top: 50px;
@@ -317,11 +338,11 @@
         <h2>Select Player View</h2>
         <div class="modal-buttons">
             <a id="btn-full" class="modal-btn">
-                <i class="fa-solid fa-tv"></i>
+                <i class="fa-solid fa-wand-magic-sparkles wand-horizontal"></i>
                 <span>Shared Screen</span>
             </a>
             <a id="btn-mobile" class="modal-btn">
-                <i class="fa-solid fa-mobile-screen"></i>
+                <i class="fa-solid fa-wand-magic wand-vertical"></i>
                 <span>Mobile Version</span>
             </a>
         </div>
@@ -342,13 +363,13 @@ function openPlayerModal(lang){
         fullBtn.href = "es/jugadores.html";
         mobileBtn.href = "es/moviles.html";
         fullBtn.querySelector('span').innerText = "Versión completa horizontal";
-        mobileBtn.querySelector('span').innerText = "Versión simple vertical";
+        mobileBtn.querySelector('span').innerText = "Vista simple vertical";
         modal.querySelector('h2').innerText = "Selecciona vista de Jugadores";
     } else {
         fullBtn.href = "en/players.html";
         mobileBtn.href = "en/mobile.html";
         fullBtn.querySelector('span').innerText = "Full horizontal version";
-        mobileBtn.querySelector('span').innerText = "Simple vertical version";
+        mobileBtn.querySelector('span').innerText = "Simple vertical view";
         modal.querySelector('h2').innerText = "Select Player View";
     }
 }
