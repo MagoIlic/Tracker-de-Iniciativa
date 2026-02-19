@@ -72,6 +72,13 @@ button{
     transition:0.2s;
     width:100%;
     box-sizing:border-box;
+
+    display:flex;
+    flex-direction:column;
+    justify-content:center;
+    align-items:center;
+
+    min-height:95px; /* MISMA ALTURA PARA TODOS */
 }
 
 .combatant-card.active{
@@ -99,6 +106,13 @@ button{
     border-radius:999px;
     font-size:0.85rem;
     font-weight:bold;
+}
+
+.state-wrapper{
+    height:28px; /* reserva espacio aunque esté vacío */
+    display:flex;
+    align-items:center;
+    justify-content:center;
 }
 
 /* Colores estilo jugadores.html */
@@ -196,7 +210,9 @@ function renderMobileList(combatants){
 
         card.innerHTML=`
             <div class="name">${c.name}</div>
-            ${!c.isPlayer?`<div class="monster-state ${estadoClass}">${estado}</div>`:''}
+            <div class="state-wrapper">
+                ${!c.isPlayer?`<div class="monster-state ${estadoClass}">${estado}</div>`:''}
+            </div>
         `;
 
         list.appendChild(card);
@@ -212,16 +228,21 @@ function autoScroll(activeIndex,total){
     if(!cards.length) return;
 
     const activeCard=cards[activeIndex];
+    const nextCard=cards[activeIndex+1];
+
     const rect=activeCard.getBoundingClientRect();
 
-    const isBelow=rect.bottom>window.innerHeight;
-    const isAbove=rect.top<0;
+    const spaceBelow=window.innerHeight-rect.bottom;
 
-    if(isBelow){
-        activeCard.scrollIntoView({behavior:'smooth',block:'end'});
+    // Si el activo está cerca del borde inferior (menos de 120px)
+    if(spaceBelow<120){
+        activeCard.scrollIntoView({
+            behavior:'smooth',
+            block:'center'
+        });
     }
 
-    // Si volvemos al primero tras terminar ronda → sube al inicio
+    // Si volvemos al primero tras terminar ronda → sube arriba
     if(previousActiveIndex===total-1 && activeIndex===0){
         window.scrollTo({top:0,behavior:'smooth'});
     }
