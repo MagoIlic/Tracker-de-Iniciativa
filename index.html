@@ -341,14 +341,14 @@ function openPlayerModal(lang){
     if(lang === 'es'){
         fullBtn.href = "es/jugadores.html";
         mobileBtn.href = "es/moviles.html";
-        fullBtn.querySelector('span').innerText = "Versión completa para tablets";
-        mobileBtn.querySelector('span').innerText = "Versión simple para smartphone";
+        fullBtn.querySelector('span').innerText = "Versión completa horizontal";
+        mobileBtn.querySelector('span').innerText = "Versión simple vertical";
         modal.querySelector('h2').innerText = "Selecciona vista de Jugadores";
     } else {
         fullBtn.href = "en/players.html";
         mobileBtn.href = "en/mobile.html";
-        fullBtn.querySelector('span').innerText = "Full version for tablets";
-        mobileBtn.querySelector('span').innerText = "Simple version for smartphones";
+        fullBtn.querySelector('span').innerText = "Full horizontal version";
+        mobileBtn.querySelector('span').innerText = "Simple vertical version";
         modal.querySelector('h2').innerText = "Select Player View";
     }
 }
