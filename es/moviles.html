@@ -63,22 +63,16 @@ button{
 }
 
 /* --- TARJETAS --- */
-
 .combatant-card{
     background:var(--card);
-    padding:18px;
     border-radius:12px;
-    text-align:center;
-    transition:0.2s;
-    width:100%;
-    box-sizing:border-box;
-
+    height:95px;
+    position:relative;
     display:flex;
-    flex-direction:column;
-    justify-content:center;
     align-items:center;
-
-    min-height:95px; /* MISMA ALTURA PARA TODOS */
+    justify-content:center;
+    box-sizing:border-box;
+    transition:0.2s;
 }
 
 .combatant-card.active{
@@ -92,30 +86,49 @@ button{
     filter:grayscale(1);
 }
 
+/* --- NOMBRE CENTRADO ABSOLUTO --- */
+
 .name{
     font-size:1.15rem;
     font-weight:bold;
-    margin-bottom:8px;
+    position:absolute;
+    left:50%;
+    transform:translateX(-50%);
+    white-space:nowrap;
 }
 
-/* --- PASTILLA ESTADO --- */
+/* --- CONTENEDOR PUNTOS --- */
+
+.status-dots{
+    position:absolute;
+    left:15px;
+    display:flex;
+    gap:6px;
+}
+
+/* --- CÍRCULOS RCVD --- */
+
+.dot{
+    width:10px;
+    height:10px;
+    border-radius:50%;
+}
+
+.dot.R{ background:white; }
+.dot.C{ background:#f1c40f; }
+.dot.V{ background:#2ecc71; }
+.dot.D{ background:#e74c3c; }
+
+/* --- ESTADO MONSTRUO --- */
 
 .monster-state{
-    display:inline-block;
+    position:absolute;
+    right:15px;
     padding:5px 12px;
     border-radius:999px;
-    font-size:0.85rem;
+    font-size:0.8rem;
     font-weight:bold;
 }
-
-.state-wrapper{
-    height:28px; /* reserva espacio aunque esté vacío */
-    display:flex;
-    align-items:center;
-    justify-content:center;
-}
-
-/* Colores estilo jugadores.html */
 
 .estado-ileso{
     background:#27ae60;
@@ -136,6 +149,7 @@ button{
     background:#c0392b;
     color:white;
 }
+
 </style>
 </head>
 
@@ -187,6 +201,21 @@ function renderMobileList(combatants){
         const card=document.createElement('div');
         card.className=`combatant-card ${c.isActive?'active':''} ${c.isDead?'dead':''}`;
 
+        /* --- PUNTOS RCVD --- */
+
+        const dotsContainer=document.createElement('div');
+        dotsContainer.className='status-dots';
+
+        ['R','C','V','D'].forEach(type=>{
+            if(c[type]){
+                const dot=document.createElement('div');
+                dot.className=`dot ${type}`;
+                dotsContainer.appendChild(dot);
+            }
+        });
+
+        /* --- ESTADO MONSTRUO --- */
+
         let estado="";
         let estadoClass="";
 
@@ -208,18 +237,23 @@ function renderMobileList(combatants){
             }
         }
 
-        card.innerHTML=`
-            <div class="name">${c.name}</div>
-            <div class="state-wrapper">
-                ${!c.isPlayer?`<div class="monster-state ${estadoClass}">${estado}</div>`:''}
-            </div>
-        `;
+        card.innerHTML=`<div class="name">${c.name}</div>`;
+
+        card.appendChild(dotsContainer);
+
+        if(!c.isPlayer){
+            const state=document.createElement('div');
+            state.className=`monster-state ${estadoClass}`;
+            state.innerText=estado;
+            card.appendChild(state);
+        }
 
         list.appendChild(card);
     });
 
     autoScroll(activeIndex, combatants.length);
 }
+
 
 /* --- SCROLL INTELIGENTE --- */
 
