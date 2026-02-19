@@ -59,6 +59,92 @@
             flex-wrap: wrap;
         }
 
+        /* Modal */
+        .modal-overlay{
+            position:fixed;
+            inset:0;
+            background:rgba(0,0,0,0.7);
+            backdrop-filter:blur(4px);
+            display:flex;
+            align-items:center;
+            justify-content:center;
+            opacity:0;
+            pointer-events:none;
+            transition:opacity 0.25s ease;
+            z-index:1000;
+        }
+
+        .modal-overlay.active{
+            opacity:1;
+            pointer-events:auto;
+        }
+
+        .modal-box{
+            background:#1f1b18;
+            border:1px solid rgba(255,255,255,0.1);
+            border-radius:16px;
+            padding:40px 35px;
+            width:340px;
+            text-align:center;
+            position:relative;
+            transform:scale(0.95);
+            transition:transform 0.25s ease;
+            box-shadow:0 15px 40px rgba(0,0,0,0.6);
+        }
+
+        .modal-overlay.active .modal-box{
+            transform:scale(1);
+        }
+
+        .modal-box h2{
+            font-family:'Cinzel', serif;
+            font-size:1.4rem;
+            margin-bottom:30px;
+            letter-spacing:1px;
+        }
+
+        .modal-buttons{
+            display:flex;
+            flex-direction:column;
+            gap:18px;
+        }
+
+        .modal-btn{
+            display:flex;
+            align-items:center;
+            justify-content:center;
+            gap:12px;
+            padding:14px 18px;
+            border-radius:10px;
+            background:linear-gradient(135deg, #2980b9 0%, #1a5276 100%);
+            color:white;
+            text-decoration:none;
+            font-family:'Cinzel', serif;
+            font-size:1rem;
+            font-weight:600;
+            transition:all 0.2s ease;
+        }
+
+        .modal-btn:hover{
+            transform:scale(1.03);
+            box-shadow:0 0 18px rgba(41,128,185,0.5);
+        }
+
+        .modal-close{
+            position:absolute;
+            top:12px;
+            right:16px;
+            font-size:1.4rem;
+            cursor:pointer;
+            opacity:0.6;
+            transition:0.2s ease;
+        }
+
+        .modal-close:hover{
+            opacity:1;
+        }
+
+
         /* Tarjeta de Idioma (Estilo Pergamino) */
         .lang-card {
             background: #1a1a1a;
@@ -200,9 +286,10 @@
                 <a class="btn btn-dm" href="es/index.html">
                     <i class="fa-solid fa-dragon"></i> Vista de DM
                 </a>
-                <a class="btn btn-player" href="es/jugadores.html">
+                <a class="btn btn-player" href="#" onclick="openPlayerModal('es')">
                     <i class="fa-solid fa-dice-d20"></i> Vista de Jugadores
                 </a>
+
             </div>
         </div>
 
@@ -212,7 +299,7 @@
                 <a class="btn btn-dm" href="en/index.html">
                     <i class="fa-solid fa-dragon"></i> DM View
                 </a>
-                <a class="btn btn-player" href="en/players.html">
+                <a class="btn btn-player" href="#" onclick="openPlayerModal('en')">
                     <i class="fa-solid fa-dice-d20"></i> Players View
                 </a>
             </div>
@@ -224,6 +311,53 @@
     </div>
 
 </div>
+
+<div id="player-modal" class="modal-overlay">
+    <div class="modal-box">
+        <h2>Select Player View</h2>
+        <div class="modal-buttons">
+            <a id="btn-full" class="modal-btn">
+                <i class="fa-solid fa-tv"></i>
+                <span>Shared Screen</span>
+            </a>
+            <a id="btn-mobile" class="modal-btn">
+                <i class="fa-solid fa-mobile-screen"></i>
+                <span>Mobile Version</span>
+            </a>
+        </div>
+        <div class="modal-close" onclick="closePlayerModal()">×</div>
+    </div>
+</div>
+
+
+<script>
+function openPlayerModal(lang){
+    const modal = document.getElementById('player-modal');
+    modal.classList.add('active');
+
+    const fullBtn = document.getElementById('btn-full');
+    const mobileBtn = document.getElementById('btn-mobile');
+
+    if(lang === 'es'){
+        fullBtn.href = "es/jugadores.html";
+        mobileBtn.href = "es/moviles.html";
+        fullBtn.querySelector('span').innerText = "Versión completa para tablets";
+        mobileBtn.querySelector('span').innerText = "Versión simple para smartphone";
+        modal.querySelector('h2').innerText = "Selecciona vista de Jugadores";
+    } else {
+        fullBtn.href = "en/players.html";
+        mobileBtn.href = "en/mobile.html";
+        fullBtn.querySelector('span').innerText = "Full version for tablets";
+        mobileBtn.querySelector('span').innerText = "Simple version for smartphones";
+        modal.querySelector('h2').innerText = "Select Player View";
+    }
+}
+
+function closePlayerModal(){
+    document.getElementById('player-modal').classList.remove('active');
+}
+</script>
+
 
 </body>
 </html>
