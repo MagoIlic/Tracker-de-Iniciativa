@@ -1,0 +1,371 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Iniciative - Mobile</title>
+<script src="https://unpkg.com/peerjs@1.5.2/dist/peerjs.min.js"></script>
+
+<style>
+:root{
+    --bg:#111;
+    --card:#1f1f1f;
+    --active:#ffffff;
+    --round:#840ff1;
+}
+
+body{
+    margin:0;
+    font-family: 'Segoe UI', sans-serif;
+    background:
+        radial-gradient(circle at 50% 40%, #3a332d 0%, #2b2622 55%, #1f1b18 100%);
+    color:#f5f5f5;
+    overflow-x:hidden;
+}
+
+
+
+header{
+    text-align:center;
+    padding:26px 0 16px;
+    position:relative;
+}
+
+/* RONDA (etiqueta pequeña arriba) */
+h1{
+    margin:0;
+    font-size:0.85rem;
+    letter-spacing:3px;
+    font-weight:500;
+    opacity:0.6;
+}
+
+/* Número grande debajo */
+#round{
+    display:block;
+    font-size:2.4rem;
+    font-weight:700;
+    letter-spacing:1px;
+    margin-top:6px;
+    color:#f5f5f5;
+}
+
+/* Línea decorativa elegante */
+header::after{
+    content:"";
+    display:block;
+    width:60%;
+    margin:18px auto 0;
+    height:1px;
+    background:rgba(255,255,255,0.15);
+}
+
+.conn-box{
+    display:flex;
+    gap:8px;
+    margin-top:18px;
+    padding:0 16px;
+}
+
+input{
+    flex:1;
+    padding:10px;
+    border-radius:8px;
+    border:1px solid rgba(255,255,255,0.1);
+    background:#2f2924;
+    color:#f5f5f5;
+}
+
+button{
+    padding:10px 16px;
+    border-radius:8px;
+    border:none;
+    background:#840ff1;
+    color:white;
+    font-weight:600;
+    cursor:pointer;
+    transition:0.2s ease;
+}
+
+button:hover{
+    filter:brightness(1.1);
+}
+
+#combat-list{
+    display:flex;
+    flex-direction:column;
+    gap:12px;
+}
+
+/* --- TARJETAS --- */
+.combatant-card{
+    background:#2f2924;
+    border-radius:18px;
+    height:95px;
+    position:relative;
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    margin:8px 16px;
+    box-shadow:0 4px 18px rgba(0,0,0,0.35);
+    transition:transform 0.2s ease, box-shadow 0.3s ease;
+}
+
+
+.combatant-card.active{
+    outline:3px solid #840ff1;
+    animation:arcaneGlow 4s ease-in-out infinite;
+}
+
+@keyframes arcaneGlow{
+    0%{
+        box-shadow:0 0 8px rgba(132,15,241,0.4);
+    }
+    50%{
+        box-shadow:0 0 22px rgba(132,15,241,0.6);
+    }
+    100%{
+        box-shadow:0 0 8px rgba(132,15,241,0.4);
+    }
+}
+
+.combatant-card.turn-transition{
+    animation:turnPop 220ms ease;
+}
+
+@keyframes turnPop{
+    0%{ transform:scale(1); }
+    50%{ transform:scale(1.04); }
+    100%{ transform:scale(1); }
+}
+
+
+.combatant-card.dead{
+    opacity:0.35;
+    filter:grayscale(1);
+}
+
+/* --- NOMBRE CENTRADO ABSOLUTO --- */
+
+.name{
+    font-size:1.2rem;
+    font-weight:700;
+    letter-spacing:0.6px;
+    position:absolute;
+    left:50%;
+    transform:translateX(-50%);
+    white-space:nowrap;
+}
+
+
+/* --- CONTENEDOR PUNTOS --- */
+
+.status-dots{
+    position:absolute;
+    left:15px;
+    display:flex;
+    gap:6px;
+}
+
+/* --- CÍRCULOS RCVD --- */
+
+.dot{
+    width:10px;
+    height:10px;
+    border-radius:50%;
+}
+
+.dot.R{ background:white; }
+.dot.C{ background:#f1c40f; }
+.dot.V{ background:#2ecc71; }
+.dot.D{ background:#e74c3c; }
+
+/* --- ESTADO MONSTRUO --- */
+
+.monster-state{
+    position:absolute;
+    right:15px;
+    padding:4px 10px;
+    border-radius:999px;
+    font-size:0.75rem;
+    font-weight:600;
+    opacity:0.95;
+}
+
+
+.estado-ileso{
+    background:#27ae60;
+    color:white;
+}
+
+.estado-herido{
+    background:#f1c40f;
+    color:black;
+}
+
+.estado-sangrando{
+    background:#e67e22;
+    color:white;
+}
+
+.estado-moribundo{
+    background:#c0392b;
+    color:white;
+}
+
+</style>
+</head>
+
+<body>
+
+<header>
+    <h1>ROUND <span id="round">1</span></h1>
+    <div class="conn-box">
+        <input type="text" id="join-id" placeholder="DM's Code">
+        <button onclick="connectToMaster()">OK</button>
+    </div>
+</header>
+
+<div id="combat-list"></div>
+
+<script>
+const peer = new Peer();
+let activeConn;
+let previousActiveIndex = 0;
+
+function connectToMaster(){
+    const id=document.getElementById('join-id').value.trim();
+    if(!id) return;
+
+    activeConn=peer.connect(id);
+
+    activeConn.on('open',()=>{
+        const btn=document.querySelector('button');
+        btn.innerText="✔";
+        btn.style.background="#27ae60";
+    });
+
+    activeConn.on('data',(data)=>{
+        document.getElementById('round').innerText=data.round;
+        renderMobileList(data.combatants);
+    });
+}
+
+function renderMobileList(combatants){
+    const list=document.getElementById('combat-list');
+    list.innerHTML='';
+
+    let activeIndex=0;
+
+    combatants.forEach((c,index)=>{
+
+        if(c.isActive) activeIndex=index;
+
+        const card=document.createElement('div');
+        card.className=`combatant-card ${c.isActive?'active':''} ${c.isDead?'dead':''}`;
+
+        /* --- PUNTOS RCVD --- */
+
+        const dotsContainer=document.createElement('div');
+        dotsContainer.className='status-dots';
+
+        if(c.checks){
+            if(c.checks.r){
+                const dot=document.createElement('div');
+                dot.className='dot R';
+                dotsContainer.appendChild(dot);
+            }
+        
+            if(c.checks.c){
+                const dot=document.createElement('div');
+                dot.className='dot C';
+                dotsContainer.appendChild(dot);
+            }
+        
+            if(c.checks.a){
+                const dot=document.createElement('div');
+                dot.className='dot V'; // ventaja
+                dotsContainer.appendChild(dot);
+            }
+        
+            if(c.checks.d){
+                const dot=document.createElement('div');
+                dot.className='dot D';
+                dotsContainer.appendChild(dot);
+            }
+        }
+
+
+        /* --- ESTADO MONSTRUO --- */
+
+        let estado="";
+        let estadoClass="";
+
+        if(!c.isPlayer){
+            const percent=c.maxHp>0?(c.currentHp/c.maxHp)*100:100;
+
+            if(percent<10){
+                estado="Moribundo";
+                estadoClass="estado-moribundo";
+            }else if(percent<50){
+                estado="Sangrando";
+                estadoClass="estado-sangrando";
+            }else if(percent<100){
+                estado="Herido";
+                estadoClass="estado-herido";
+            }else{
+                estado="Ileso";
+                estadoClass="estado-ileso";
+            }
+        }
+
+        card.innerHTML=`<div class="name">${c.name}</div>`;
+
+        card.appendChild(dotsContainer);
+
+        if(!c.isPlayer){
+            const state=document.createElement('div');
+            state.className=`monster-state ${estadoClass}`;
+            state.innerText=estado;
+            card.appendChild(state);
+        }
+
+        list.appendChild(card);
+    });
+
+    autoScroll(activeIndex, combatants.length);
+}
+
+
+/* --- SCROLL INTELIGENTE --- */
+
+function autoScroll(activeIndex,total){
+    const cards=document.querySelectorAll('.combatant-card');
+    if(!cards.length) return;
+
+    const activeCard=cards[activeIndex];
+    const nextCard=cards[activeIndex+1];
+
+    const rect=activeCard.getBoundingClientRect();
+
+    const spaceBelow=window.innerHeight-rect.bottom;
+
+    // Si el activo está cerca del borde inferior (menos de 120px)
+    if(spaceBelow<120){
+        activeCard.scrollIntoView({
+            behavior:'smooth',
+            block:'center'
+        });
+    }
+
+    // Si volvemos al primero tras terminar ronda → sube arriba
+    if(previousActiveIndex===total-1 && activeIndex===0){
+        window.scrollTo({top:0,behavior:'smooth'});
+    }
+
+    previousActiveIndex=activeIndex;
+}
+</script>
+
+</body>
+</html>
