@@ -3,214 +3,199 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Iniciativa - Vista Móvil</title>
+    <title>Vista Móvil - Iniciativa</title>
     <script src="https://unpkg.com/peerjs@1.5.2/dist/peerjs.min.js"></script>
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <style>
-        :root {
-            --bg: #1a1a1a;
-            --card-bg: #2c2c2c;
-            --active-gold: #ffc107;
-            --accent: #840ff1;
-        }
-
-        body {
-            font-family: 'Segoe UI', sans-serif;
-            background-color: var(--bg);
-            color: #eee;
+        body { 
+            font-family: sans-serif; 
+            background: #2c3e50; 
+            color: white; 
+            padding: 10px; 
             margin: 0;
-            padding: 10px;
-            display: flex;
-            flex-direction: column;
-            align-items: center;
         }
+        
+        h1 { font-size: 1.4rem; text-align: center; margin: 10px 0; }
 
-        header {
-            width: 100%;
-            text-align: center;
-            margin-bottom: 15px;
-        }
-
-        h1 { font-size: 1.2rem; margin: 10px 0; color: var(--active-gold); }
-
-        /* Conexión */
-        .conn-box {
-            width: 100%;
+        /* Panel de Conexión idéntico a jugadores.html */
+        .conn-area {
             display: flex;
             gap: 5px;
-            margin-bottom: 15px;
+            margin-bottom: 20px;
+            justify-content: center;
         }
-        input {
-            flex: 1;
-            padding: 10px;
-            border-radius: 5px;
-            border: 1px solid #444;
-            background: #333;
-            color: white;
-        }
-        button {
+        #join-id {
             padding: 10px;
             border-radius: 5px;
             border: none;
-            background: var(--accent);
+            flex: 1;
+            max-width: 200px;
+        }
+        button {
+            padding: 10px 15px;
+            border-radius: 5px;
+            border: none;
+            background: #3498db;
             color: white;
             font-weight: bold;
+            cursor: pointer;
         }
 
-        /* Lista de Combate */
-        #combat-list {
-            width: 100%;
+        /* Contenedor de Tarjetas (Formato Vertical) */
+        #mobile-list {
             display: flex;
             flex-direction: column;
-            gap: 10px;
+            gap: 12px;
         }
 
-        .combatant-card {
-            background: var(--card-bg);
-            border-left: 5px solid #555;
-            padding: 12px;
-            border-radius: 8px;
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
+        .card {
+            background: #34495e;
+            border-radius: 10px;
+            padding: 15px;
+            border-left: 6px solid #555;
             transition: 0.3s;
-            position: relative;
         }
 
-        /* Indicador de turno activo */
-        .combatant-card.active {
-            border-left-color: var(--active-gold);
-            background: #3d3d2e;
+        .card.active {
+            border-left-color: #840ff1;
+            background: #3d566e;
             transform: scale(1.02);
-            box-shadow: 0 0 15px rgba(255, 193, 7, 0.2);
+            box-shadow: 0 4px 15px rgba(0,0,0,0.3);
         }
 
-        .combatant-card.active::after {
-            content: '⮕';
-            position: absolute;
-            left: -25px;
-            color: var(--active-gold);
-            font-weight: bold;
-        }
-
-        .combatant-card.dead {
-            opacity: 0.4;
+        .card.dead {
+            opacity: 0.3;
             filter: grayscale(1);
         }
 
-        .info-main { display: flex; flex-direction: column; gap: 4px; }
+        .card-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 8px;
+        }
+
         .name { font-weight: bold; font-size: 1.1rem; }
 
-        /* Etiquetas pequeñas */
-        .tags-row { display: flex; flex-wrap: wrap; gap: 4px; }
-        .mini-tag {
-            font-size: 0.65rem;
-            padding: 2px 6px;
-            border-radius: 4px;
-            text-transform: uppercase;
-        }
-        .cond { background: #842029; }
-        .eff { background: #084298; }
+        /* Puntos R C A D */
+        .dots { display: flex; gap: 6px; }
+        .dot { width: 10px; height: 10px; border-radius: 50%; background: rgba(255,255,255,0.1); }
+        .dot.r { background: white; }
+        .dot.c { background: #f1c40f; }
+        .dot.a { background: #2ecc71; }
+        .dot.d { background: #e74c3c; }
 
-        /* Status Pills (R C A D) */
-        .status-dots {
-            display: flex;
-            gap: 4px;
+        /* Info de Vida/Estado */
+        .status-info { font-size: 0.9rem; margin-bottom: 8px; }
+        .status-pill { 
+            padding: 2px 8px; 
+            border-radius: 4px; 
+            font-size: 0.75rem; 
+            margin-left: 5px;
+            font-weight: bold;
         }
-        .dot { width: 8px; height: 8px; border-radius: 50%; background: #444; }
-        .dot.active-r { background: white; box-shadow: 0 0 5px white; }
-        .dot.active-c { background: #f1c40f; box-shadow: 0 0 5px #f1c40f; }
-        .dot.active-a { background: #2ecc71; box-shadow: 0 0 5px #2ecc71; }
-        .dot.active-d { background: #e74c3c; box-shadow: 0 0 5px #e74c3c; }
 
-        /* Estado de vida reducido */
-        .hp-status {
-            text-align: right;
-            font-size: 0.8rem;
-            min-width: 80px;
+        /* Tags */
+        .tag-box { display: flex; flex-wrap: wrap; gap: 4px; }
+        .tag {
+            padding: 2px 8px;
+            border-radius: 8px;
+            font-size: 0.75rem;
+            color: white;
         }
-        .dmg-val { color: #ff4d4d; font-weight: bold; display: block; }
     </style>
 </head>
 <body>
 
-<header>
-    <h1>🛡️ RONDA <span id="round">1</span></h1>
-    <div class="conn-box">
+    <h1>Ronda <span id="round">1</span></h1>
+
+    <div class="conn-area">
         <input type="text" id="join-id" placeholder="ID del Master">
-        <button onclick="connectToMaster()">OK</button>
-    </div>
-</header>
-
-<div id="combat-list">
+        <button onclick="connectToMaster()">Conectar</button>
     </div>
 
-<script>
-    const peer = new Peer();
-    let activeConn;
+    <div id="mobile-list">
+        </div>
 
-    function connectToMaster() {
-        const id = document.getElementById('join-id').value.trim();
-        if (!id) return;
-        
-        activeConn = peer.connect(id, { reliable: true });
+    <script>
+        // LÓGICA DE CONEXIÓN COPIADA DE JUGADORES.HTML
+        const peer = new Peer();
+        let activeConn;
 
-        activeConn.on('open', () => {
-            document.querySelector('button').innerText = "✔️";
-            document.querySelector('button').style.background = "#27ae60";
-        });
+        function connectToMaster() {
+            const id = document.getElementById('join-id').value.trim();
+            if (!id) return;
+            
+            // Forzamos conexión fiable como en jugadores.html
+            activeConn = peer.connect(id, { reliable: true });
 
-        activeConn.on('data', (data) => {
-            document.getElementById('round').innerText = data.round;
-            renderMobileList(data.combatants);
-        });
-    }
+            activeConn.on('open', () => {
+                const btn = document.querySelector('button');
+                btn.innerText = "✅ OK";
+                btn.style.background = "#27ae60";
+            });
 
-    function renderMobileList(combatants) {
-        const list = document.getElementById('combat-list');
-        list.innerHTML = '';
+            activeConn.on('data', (data) => {
+                console.log("¡Llegaron datos!");
+                document.getElementById('round').innerText = data.round;
+                renderMobileCards(data.combatants);
+            });
+        }
 
-        combatants.forEach(c => {
-            const card = document.createElement('div');
-            card.className = `combatant-card ${c.isActive ? 'active' : ''} ${c.isDead ? 'dead' : ''}`;
+        function renderMobileCards(combatants) {
+            const container = document.getElementById('mobile-list'); 
+            if (!container) return;
+            
+            container.innerHTML = '';
+            
+            combatants.forEach(c => {
+                const card = document.createElement('div');
+                card.className = `card ${c.isActive ? 'active' : ''} ${c.isDead ? 'dead' : ''}`;
 
-            // Lógica de salud simplificada para monstruos
-            let healthDisplay = "";
-            if (!c.isPlayer) {
-                const percent = c.maxHp > 0 ? (c.currentHp / c.maxHp) * 100 : 100;
-                let color = "#27ae60";
-                if (percent < 10) color = "#000";
-                else if (percent < 50) color = "#ff4d4d";
-                else if (percent < 100) color = "#f1c40f";
+                // Lógica de salud (Solo monstruos)
+                let hpSection = "";
+                if (!c.isPlayer) {
+                    const percent = c.maxHp > 0 ? (c.currentHp / c.maxHp) * 100 : 100;
+                    let estado = "Ileso";
+                    let color = "#27ae60";
 
-                healthDisplay = `
-                    <div class="hp-status">
-                        <span class="dmg-val">-${c.damageTaken} HP</span>
-                        <span style="color:${color}; font-size: 0.7rem;">● Estado</span>
+                    if (percent < 10) { estado = "Moribundo"; color = "#000"; }
+                    else if (percent < 50) { estado = "Sangrando"; color = "#e74c3c"; }
+                    else if (percent < 100) { estado = "Herido"; color = "#f1c40f"; }
+
+                    hpSection = `
+                        <div class="status-info">
+                            <b>${c.damageTaken} 💥</b> 
+                            <span class="status-pill" style="background:${color}">${estado}</span>
+                        </div>
+                    `;
+                }
+
+                card.innerHTML = `
+                    <div class="card-header">
+                        <div class="name">${c.name}</div>
+                        <div class="dots">
+                            <div class="dot ${c.checks.r ? 'r' : ''}"></div>
+                            <div class="dot ${c.checks.c ? 'c' : ''}"></div>
+                            <div class="dot ${c.checks.a ? 'a' : ''}"></div>
+                            <div class="dot ${c.checks.d ? 'd' : ''}"></div>
+                        </div>
+                    </div>
+
+                    ${hpSection}
+
+                    <div class="tag-box">
+                        ${c.tags.conditions.map(t => 
+                            `<span class="tag" style="background:#842029;">${t}</span>`
+                        ).join('')}
+                        ${c.tags.effects.map(t => 
+                            `<span class="tag" style="background:#084298;">${t}</span>`
+                        ).join('')}
                     </div>
                 `;
-            }
 
-            card.innerHTML = `
-                <div class="info-main">
-                    <div class="name">${c.name}</div>
-                    <div class="status-dots">
-                        <div class="dot ${c.checks.r ? 'active-r' : ''}"></div>
-                        <div class="dot ${c.checks.c ? 'active-c' : ''}"></div>
-                        <div class="dot ${c.checks.a ? 'active-a' : ''}"></div>
-                        <div class="dot ${c.checks.d ? 'active-d' : ''}"></div>
-                    </div>
-                    <div class="tags-row">
-                        ${c.tags.conditions.map(t => `<span class="mini-tag cond">${t}</span>`).join('')}
-                        ${c.tags.effects.map(t => `<span class="mini-tag eff">${t}</span>`).join('')}
-                    </div>
-                </div>
-                ${healthDisplay}
-            `;
-            list.appendChild(card);
-        });
-    }
-</script>
-
+                container.appendChild(card);
+            });
+        }
+    </script>
 </body>
 </html>
