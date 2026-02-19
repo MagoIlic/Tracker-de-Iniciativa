@@ -206,13 +206,32 @@ function renderMobileList(combatants){
         const dotsContainer=document.createElement('div');
         dotsContainer.className='status-dots';
 
-        ['R','C','V','D'].forEach(type=>{
-            if(c[type]){
+        if(c.checks){
+            if(c.checks.r){
                 const dot=document.createElement('div');
-                dot.className=`dot ${type}`;
+                dot.className='dot R';
                 dotsContainer.appendChild(dot);
             }
-        });
+        
+            if(c.checks.c){
+                const dot=document.createElement('div');
+                dot.className='dot C';
+                dotsContainer.appendChild(dot);
+            }
+        
+            if(c.checks.a){
+                const dot=document.createElement('div');
+                dot.className='dot V'; // ventaja
+                dotsContainer.appendChild(dot);
+            }
+        
+            if(c.checks.d){
+                const dot=document.createElement('div');
+                dot.className='dot D';
+                dotsContainer.appendChild(dot);
+            }
+        }
+
 
         /* --- ESTADO MONSTRUO --- */
 
