@@ -3,199 +3,166 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Vista Móvil - Iniciativa</title>
+    <title>Iniciativa - Vista Móvil</title>
     <script src="https://unpkg.com/peerjs@1.5.2/dist/peerjs.min.js"></script>
-    <style>
-        body { 
-            font-family: sans-serif; 
-            background: #2c3e50; 
-            color: white; 
-            padding: 10px; 
-            margin: 0;
-        }
-        
-        h1 { font-size: 1.4rem; text-align: center; margin: 10px 0; }
 
-        /* Panel de Conexión idéntico a jugadores.html */
-        .conn-area {
-            display: flex;
-            gap: 5px;
+    <style>
+        :root {
+            --bg: #111;
+            --card: #1f1f1f;
+            --active: #ffc107;
+        }
+
+        body {
+            margin: 0;
+            padding: 15px;
+            font-family: 'Segoe UI', sans-serif;
+            background: var(--bg);
+            color: white;
+        }
+
+        header {
+            text-align: center;
             margin-bottom: 20px;
-            justify-content: center;
         }
-        #join-id {
-            padding: 10px;
-            border-radius: 5px;
-            border: none;
+
+        h1 {
+            font-size: 1.2rem;
+            margin: 0 0 10px 0;
+            color: var(--active);
+        }
+
+        .conn-box {
+            display: flex;
+            gap: 8px;
+        }
+
+        input {
             flex: 1;
-            max-width: 200px;
+            padding: 10px;
+            border-radius: 6px;
+            border: 1px solid #333;
+            background: #222;
+            color: white;
         }
+
         button {
-            padding: 10px 15px;
-            border-radius: 5px;
+            padding: 10px 14px;
+            border-radius: 6px;
             border: none;
-            background: #3498db;
+            background: #840ff1;
             color: white;
             font-weight: bold;
-            cursor: pointer;
         }
 
-        /* Contenedor de Tarjetas (Formato Vertical) */
-        #mobile-list {
+        #combat-list {
             display: flex;
             flex-direction: column;
-            gap: 12px;
+            gap: 10px;
         }
 
-        .card {
-            background: #34495e;
+        .combatant-card {
+            background: var(--card);
+            border-left: 6px solid #444;
+            padding: 16px;
             border-radius: 10px;
-            padding: 15px;
-            border-left: 6px solid #555;
-            transition: 0.3s;
-        }
-
-        .card.active {
-            border-left-color: #840ff1;
-            background: #3d566e;
-            transform: scale(1.02);
-            box-shadow: 0 4px 15px rgba(0,0,0,0.3);
-        }
-
-        .card.dead {
-            opacity: 0.3;
-            filter: grayscale(1);
-        }
-
-        .card-header {
             display: flex;
             justify-content: space-between;
             align-items: center;
-            margin-bottom: 8px;
+            transition: 0.2s;
         }
 
-        .name { font-weight: bold; font-size: 1.1rem; }
+        .combatant-card.active {
+            border-left-color: var(--active);
+            background: #3a3520;
+            box-shadow: 0 0 15px rgba(255, 193, 7, 0.3);
+            transform: scale(1.02);
+        }
 
-        /* Puntos R C A D */
-        .dots { display: flex; gap: 6px; }
-        .dot { width: 10px; height: 10px; border-radius: 50%; background: rgba(255,255,255,0.1); }
-        .dot.r { background: white; }
-        .dot.c { background: #f1c40f; }
-        .dot.a { background: #2ecc71; }
-        .dot.d { background: #e74c3c; }
+        .combatant-card.dead {
+            opacity: 0.35;
+            filter: grayscale(1);
+        }
 
-        /* Info de Vida/Estado */
-        .status-info { font-size: 0.9rem; margin-bottom: 8px; }
-        .status-pill { 
-            padding: 2px 8px; 
-            border-radius: 4px; 
-            font-size: 0.75rem; 
-            margin-left: 5px;
+        .name {
+            font-size: 1.1rem;
             font-weight: bold;
         }
 
-        /* Tags */
-        .tag-box { display: flex; flex-wrap: wrap; gap: 4px; }
-        .tag {
-            padding: 2px 8px;
-            border-radius: 8px;
-            font-size: 0.75rem;
-            color: white;
+        .monster-state {
+            font-size: 0.85rem;
+            opacity: 0.8;
         }
     </style>
 </head>
+
 <body>
 
-    <h1>Ronda <span id="round">1</span></h1>
-
-    <div class="conn-area">
+<header>
+    <h1>RONDA <span id="round">1</span></h1>
+    <div class="conn-box">
         <input type="text" id="join-id" placeholder="ID del Master">
-        <button onclick="connectToMaster()">Conectar</button>
+        <button onclick="connectToMaster()">OK</button>
     </div>
+</header>
 
-    <div id="mobile-list">
-        </div>
+<div id="combat-list"></div>
 
-    <script>
-        // LÓGICA DE CONEXIÓN COPIADA DE JUGADORES.HTML
-        const peer = new Peer();
-        let activeConn;
+<script>
+    const peer = new Peer();
+    let activeConn;
 
-        function connectToMaster() {
-            const id = document.getElementById('join-id').value.trim();
-            if (!id) return;
-            
-            // Forzamos conexión fiable como en jugadores.html
-            activeConn = peer.connect(id, { reliable: true });
+    function connectToMaster() {
+        const id = document.getElementById('join-id').value.trim();
+        if (!id) return;
 
-            activeConn.on('open', () => {
-                const btn = document.querySelector('button');
-                btn.innerText = "✅ OK";
-                btn.style.background = "#27ae60";
-            });
+        activeConn = peer.connect(id);
 
-            activeConn.on('data', (data) => {
-                console.log("¡Llegaron datos!");
-                document.getElementById('round').innerText = data.round;
-                renderMobileCards(data.combatants);
-            });
-        }
+        activeConn.on('open', () => {
+            const btn = document.querySelector('button');
+            btn.innerText = "✔";
+            btn.style.background = "#27ae60";
+        });
 
-        function renderMobileCards(combatants) {
-            const container = document.getElementById('mobile-list'); 
-            if (!container) return;
-            
-            container.innerHTML = '';
-            
-            combatants.forEach(c => {
-                const card = document.createElement('div');
-                card.className = `card ${c.isActive ? 'active' : ''} ${c.isDead ? 'dead' : ''}`;
+        activeConn.on('data', (data) => {
+            document.getElementById('round').innerText = data.round;
+            renderMobileList(data.combatants);
+        });
+    }
 
-                // Lógica de salud (Solo monstruos)
-                let hpSection = "";
-                if (!c.isPlayer) {
-                    const percent = c.maxHp > 0 ? (c.currentHp / c.maxHp) * 100 : 100;
-                    let estado = "Ileso";
-                    let color = "#27ae60";
+    function renderMobileList(combatants) {
+        const list = document.getElementById('combat-list');
+        list.innerHTML = '';
 
-                    if (percent < 10) { estado = "Moribundo"; color = "#000"; }
-                    else if (percent < 50) { estado = "Sangrando"; color = "#e74c3c"; }
-                    else if (percent < 100) { estado = "Herido"; color = "#f1c40f"; }
+        combatants.forEach(c => {
+            const card = document.createElement('div');
+            card.className = `combatant-card ${c.isActive ? 'active' : ''} ${c.isDead ? 'dead' : ''}`;
 
-                    hpSection = `
-                        <div class="status-info">
-                            <b>${c.damageTaken} 💥</b> 
-                            <span class="status-pill" style="background:${color}">${estado}</span>
-                        </div>
-                    `;
+            let estado = "";
+
+            if (!c.isPlayer) {
+                const percent = c.maxHp > 0 ? (c.currentHp / c.maxHp) * 100 : 100;
+
+                if (percent < 10) {
+                    estado = "Moribundo";
+                } else if (percent < 50) {
+                    estado = "Sangrando";
+                } else if (percent < 100) {
+                    estado = "Herido";
+                } else {
+                    estado = "Ileso";
                 }
+            }
 
-                card.innerHTML = `
-                    <div class="card-header">
-                        <div class="name">${c.name}</div>
-                        <div class="dots">
-                            <div class="dot ${c.checks.r ? 'r' : ''}"></div>
-                            <div class="dot ${c.checks.c ? 'c' : ''}"></div>
-                            <div class="dot ${c.checks.a ? 'a' : ''}"></div>
-                            <div class="dot ${c.checks.d ? 'd' : ''}"></div>
-                        </div>
-                    </div>
+            card.innerHTML = `
+                <div class="name">${c.name}</div>
+                ${!c.isPlayer ? `<div class="monster-state">${estado}</div>` : ''}
+            `;
 
-                    ${hpSection}
+            list.appendChild(card);
+        });
+    }
+</script>
 
-                    <div class="tag-box">
-                        ${c.tags.conditions.map(t => 
-                            `<span class="tag" style="background:#842029;">${t}</span>`
-                        ).join('')}
-                        ${c.tags.effects.map(t => 
-                            `<span class="tag" style="background:#084298;">${t}</span>`
-                        ).join('')}
-                    </div>
-                `;
-
-                container.appendChild(card);
-            });
-        }
-    </script>
 </body>
 </html>
