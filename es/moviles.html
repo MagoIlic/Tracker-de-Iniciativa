@@ -58,24 +58,22 @@
         #combat-list {
             display: flex;
             flex-direction: column;
-            gap: 10px;
+            gap: 12px;
         }
 
         .combatant-card {
             background: var(--card);
             border-left: 6px solid #444;
-            padding: 16px;
-            border-radius: 10px;
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
+            padding: 18px;
+            border-radius: 12px;
+            text-align: center;
             transition: 0.2s;
         }
 
         .combatant-card.active {
             border-left-color: var(--active);
             background: #3a3520;
-            box-shadow: 0 0 15px rgba(255, 193, 7, 0.3);
+            box-shadow: 0 0 18px rgba(255, 193, 7, 0.4);
             transform: scale(1.02);
         }
 
@@ -85,13 +83,31 @@
         }
 
         .name {
-            font-size: 1.1rem;
+            font-size: 1.15rem;
             font-weight: bold;
+            margin-bottom: 6px;
         }
 
         .monster-state {
-            font-size: 0.85rem;
-            opacity: 0.8;
+            font-size: 0.9rem;
+            font-weight: bold;
+        }
+
+        /* Colores de estado */
+        .estado-ileso {
+            color: #27ae60;
+        }
+
+        .estado-herido {
+            color: #f1c40f;
+        }
+
+        .estado-sangrando {
+            color: #ff0000;
+        }
+
+        .estado-moribundo {
+            color: #000000;
         }
     </style>
 </head>
@@ -139,24 +155,29 @@
             card.className = `combatant-card ${c.isActive ? 'active' : ''} ${c.isDead ? 'dead' : ''}`;
 
             let estado = "";
+            let estadoClass = "";
 
             if (!c.isPlayer) {
                 const percent = c.maxHp > 0 ? (c.currentHp / c.maxHp) * 100 : 100;
 
                 if (percent < 10) {
                     estado = "Moribundo";
+                    estadoClass = "estado-moribundo";
                 } else if (percent < 50) {
                     estado = "Sangrando";
+                    estadoClass = "estado-sangrando";
                 } else if (percent < 100) {
                     estado = "Herido";
+                    estadoClass = "estado-herido";
                 } else {
                     estado = "Ileso";
+                    estadoClass = "estado-ileso";
                 }
             }
 
             card.innerHTML = `
                 <div class="name">${c.name}</div>
-                ${!c.isPlayer ? `<div class="monster-state">${estado}</div>` : ''}
+                ${!c.isPlayer ? `<div class="monster-state ${estadoClass}">${estado}</div>` : ''}
             `;
 
             list.appendChild(card);
