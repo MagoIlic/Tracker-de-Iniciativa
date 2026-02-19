@@ -1,115 +1,128 @@
 <!DOCTYPE html>
 <html lang="es">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Iniciativa - Vista Móvil</title>
-    <script src="https://unpkg.com/peerjs@1.5.2/dist/peerjs.min.js"></script>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Iniciativa - Vista Móvil</title>
+<script src="https://unpkg.com/peerjs@1.5.2/dist/peerjs.min.js"></script>
 
-    <style>
-        :root {
-            --bg: #111;
-            --card: #1f1f1f;
-            --active: #ffc107;
-        }
+<style>
+:root{
+    --bg:#111;
+    --card:#1f1f1f;
+    --active:#ffc107;
+    --round:#840ff1;
+}
 
-        body {
-            margin: 0;
-            padding: 15px;
-            font-family: 'Segoe UI', sans-serif;
-            background: var(--bg);
-            color: white;
-        }
+body{
+    margin:0;
+    padding:15px;
+    font-family:'Segoe UI',sans-serif;
+    background:var(--bg);
+    color:white;
+}
 
-        header {
-            text-align: center;
-            margin-bottom: 20px;
-        }
+header{
+    text-align:center;
+    margin-bottom:20px;
+}
 
-        h1 {
-            font-size: 1.2rem;
-            margin: 0 0 10px 0;
-            color: var(--active);
-        }
+h1{
+    font-size:1.2rem;
+    margin:0 0 10px 0;
+    color:var(--round);
+}
 
-        .conn-box {
-            display: flex;
-            gap: 8px;
-        }
+.conn-box{
+    display:flex;
+    gap:8px;
+}
 
-        input {
-            flex: 1;
-            padding: 10px;
-            border-radius: 6px;
-            border: 1px solid #333;
-            background: #222;
-            color: white;
-        }
+input{
+    flex:1;
+    padding:10px;
+    border-radius:6px;
+    border:1px solid #333;
+    background:#222;
+    color:white;
+}
 
-        button {
-            padding: 10px 14px;
-            border-radius: 6px;
-            border: none;
-            background: #840ff1;
-            color: white;
-            font-weight: bold;
-        }
+button{
+    padding:10px 14px;
+    border-radius:6px;
+    border:none;
+    background:var(--round);
+    color:white;
+    font-weight:bold;
+}
 
-        #combat-list {
-            display: flex;
-            flex-direction: column;
-            gap: 12px;
-        }
+#combat-list{
+    display:flex;
+    flex-direction:column;
+    gap:12px;
+}
 
-        .combatant-card {
-            background: var(--card);
-            border-left: 6px solid #444;
-            padding: 18px;
-            border-radius: 12px;
-            text-align: center;
-            transition: 0.2s;
-        }
+/* --- TARJETAS --- */
 
-        .combatant-card.active {
-            border-left-color: var(--active);
-            background: #3a3520;
-            box-shadow: 0 0 18px rgba(255, 193, 7, 0.4);
-            transform: scale(1.02);
-        }
+.combatant-card{
+    background:var(--card);
+    padding:18px;
+    border-radius:12px;
+    text-align:center;
+    transition:0.2s;
+    width:100%;
+    box-sizing:border-box;
+}
 
-        .combatant-card.dead {
-            opacity: 0.35;
-            filter: grayscale(1);
-        }
+.combatant-card.active{
+    outline:3px solid var(--active);
+    box-shadow:0 0 18px rgba(255,193,7,0.4);
+    transform:scale(1.02);
+}
 
-        .name {
-            font-size: 1.15rem;
-            font-weight: bold;
-            margin-bottom: 6px;
-        }
+.combatant-card.dead{
+    opacity:0.35;
+    filter:grayscale(1);
+}
 
-        .monster-state {
-            font-size: 0.9rem;
-            font-weight: bold;
-        }
+.name{
+    font-size:1.15rem;
+    font-weight:bold;
+    margin-bottom:8px;
+}
 
-        /* Colores de estado */
-        .estado-ileso {
-            color: #27ae60;
-        }
+/* --- PASTILLA ESTADO --- */
 
-        .estado-herido {
-            color: #f1c40f;
-        }
+.monster-state{
+    display:inline-block;
+    padding:5px 12px;
+    border-radius:999px;
+    font-size:0.85rem;
+    font-weight:bold;
+}
 
-        .estado-sangrando {
-            color: #ff0000;
-        }
+/* Colores estilo jugadores.html */
 
-        .estado-moribundo {
-            color: #000000;
-        }
-    </style>
+.estado-ileso{
+    background:#27ae60;
+    color:white;
+}
+
+.estado-herido{
+    background:#f1c40f;
+    color:black;
+}
+
+.estado-sangrando{
+    background:#e67e22;
+    color:white;
+}
+
+.estado-moribundo{
+    background:#c0392b;
+    color:white;
+}
+</style>
 </head>
 
 <body>
@@ -125,64 +138,96 @@
 <div id="combat-list"></div>
 
 <script>
-    const peer = new Peer();
-    let activeConn;
+const peer = new Peer();
+let activeConn;
+let previousActiveIndex = 0;
 
-    function connectToMaster() {
-        const id = document.getElementById('join-id').value.trim();
-        if (!id) return;
+function connectToMaster(){
+    const id=document.getElementById('join-id').value.trim();
+    if(!id) return;
 
-        activeConn = peer.connect(id);
+    activeConn=peer.connect(id);
 
-        activeConn.on('open', () => {
-            const btn = document.querySelector('button');
-            btn.innerText = "✔";
-            btn.style.background = "#27ae60";
-        });
+    activeConn.on('open',()=>{
+        const btn=document.querySelector('button');
+        btn.innerText="✔";
+        btn.style.background="#27ae60";
+    });
 
-        activeConn.on('data', (data) => {
-            document.getElementById('round').innerText = data.round;
-            renderMobileList(data.combatants);
-        });
-    }
+    activeConn.on('data',(data)=>{
+        document.getElementById('round').innerText=data.round;
+        renderMobileList(data.combatants);
+    });
+}
 
-    function renderMobileList(combatants) {
-        const list = document.getElementById('combat-list');
-        list.innerHTML = '';
+function renderMobileList(combatants){
+    const list=document.getElementById('combat-list');
+    list.innerHTML='';
 
-        combatants.forEach(c => {
-            const card = document.createElement('div');
-            card.className = `combatant-card ${c.isActive ? 'active' : ''} ${c.isDead ? 'dead' : ''}`;
+    let activeIndex=0;
 
-            let estado = "";
-            let estadoClass = "";
+    combatants.forEach((c,index)=>{
 
-            if (!c.isPlayer) {
-                const percent = c.maxHp > 0 ? (c.currentHp / c.maxHp) * 100 : 100;
+        if(c.isActive) activeIndex=index;
 
-                if (percent < 10) {
-                    estado = "Moribundo";
-                    estadoClass = "estado-moribundo";
-                } else if (percent < 50) {
-                    estado = "Sangrando";
-                    estadoClass = "estado-sangrando";
-                } else if (percent < 100) {
-                    estado = "Herido";
-                    estadoClass = "estado-herido";
-                } else {
-                    estado = "Ileso";
-                    estadoClass = "estado-ileso";
-                }
+        const card=document.createElement('div');
+        card.className=`combatant-card ${c.isActive?'active':''} ${c.isDead?'dead':''}`;
+
+        let estado="";
+        let estadoClass="";
+
+        if(!c.isPlayer){
+            const percent=c.maxHp>0?(c.currentHp/c.maxHp)*100:100;
+
+            if(percent<10){
+                estado="Moribundo";
+                estadoClass="estado-moribundo";
+            }else if(percent<50){
+                estado="Sangrando";
+                estadoClass="estado-sangrando";
+            }else if(percent<100){
+                estado="Herido";
+                estadoClass="estado-herido";
+            }else{
+                estado="Ileso";
+                estadoClass="estado-ileso";
             }
+        }
 
-            card.innerHTML = `
-                <div class="name">${c.name}</div>
-                ${!c.isPlayer ? `<div class="monster-state ${estadoClass}">${estado}</div>` : ''}
-            `;
+        card.innerHTML=`
+            <div class="name">${c.name}</div>
+            ${!c.isPlayer?`<div class="monster-state ${estadoClass}">${estado}</div>`:''}
+        `;
 
-            list.appendChild(card);
-        });
+        list.appendChild(card);
+    });
+
+    autoScroll(activeIndex, combatants.length);
+}
+
+/* --- SCROLL INTELIGENTE --- */
+
+function autoScroll(activeIndex,total){
+    const cards=document.querySelectorAll('.combatant-card');
+    if(!cards.length) return;
+
+    const activeCard=cards[activeIndex];
+    const rect=activeCard.getBoundingClientRect();
+
+    const isBelow=rect.bottom>window.innerHeight;
+    const isAbove=rect.top<0;
+
+    if(isBelow){
+        activeCard.scrollIntoView({behavior:'smooth',block:'end'});
     }
+
+    // Si volvemos al primero tras terminar ronda → sube al inicio
+    if(previousActiveIndex===total-1 && activeIndex===0){
+        window.scrollTo({top:0,behavior:'smooth'});
+    }
+
+    previousActiveIndex=activeIndex;
+}
 </script>
 
 </body>
