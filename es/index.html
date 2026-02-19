@@ -313,13 +313,17 @@
 <div class="header">
     <h2>⚔️ Ronda <span id="round-count">1</span></h2>
     <div style="display: flex; gap: 10px; align-items: center;">
-        <button class="btn btn-player" onclick="addRow('', '', '', 0, true)">+ Jugador</button>
-        <button class="btn btn-monster" onclick="openMonsterModal()">+ Monstruo</button>
-        <button class="btn btn-sort" onclick="sortInit()">📜 Ordenar</button>
         <button class="btn btn-next" onclick="nextTurn()">Siguiente ⮕</button>
         <button class="btn btn-reset" onclick="resetCombat()">Reset</button>
         <button class="btn" style="background: #23BAC4 !important; color: white;" onclick="openPlayersModal()">👥 Gestionar Jugadores</button>
         <button class="btn" style="background: #8e44ad; color: white;" onclick="importarJugadores()">📥 Importar Jugadores</button>
+        <button class="btn btn-player" onclick="addRow('', '', '', 0, true)">+ Jugador</button>
+        <button class="btn btn-monster" onclick="openMonsterModal()">+ Monstruo</button>
+        <button class="btn btn-sort" onclick="sortInit()">📜 Ordenar</button>
+        <label style="margin-left:10px; cursor:pointer;">
+            <input type="checkbox" id="auto-sort-toggle">
+            Auto-ordenar
+        </label>
     </div>
 </div>
 
@@ -328,8 +332,8 @@
         <tr>
             <th style="width: 60px;">Inic.</th>
             <th>Nombre</th>
-            <th style="width: 140px;">Vida | CA</th>
-            <th style="width: 130px;">R | C | V | D</th>
+            <th style="width: 140px;">Vida / CA</th>
+            <th style="width: 130px;">R | C | A | D</th>
             <th style="width: 220px;">Condiciones</th>
             <th style="width: 220px;">Efectos</th>
             <th style="width: 80px;">Acción</th>
@@ -405,6 +409,14 @@ let JUGADORES_MEMORIA = JSON.parse(localStorage.getItem('dnd_players')) || [
     }
 
 // Crea la interfaz de edición dentro del modal
+
+    function autoSortIfEnabled() {
+        const toggle = document.getElementById("auto-sort-toggle");
+        if (toggle && toggle.checked) {
+            sortInit();
+        }
+    }
+
     function renderPlayersEditor() {
         const container = document.getElementById('players-list-editor');
         container.innerHTML = '';
@@ -532,11 +544,16 @@ let JUGADORES_MEMORIA = JSON.parse(localStorage.getItem('dnd_players')) || [
             </td>
         `;
         tbody.appendChild(tr);
+        autoSortIfEnabled();
         broadcastData();
         tr.querySelectorAll('input').forEach(input => {
-            input.addEventListener('input', broadcastData);
-            input.addEventListener('change', broadcastData);
+            input.addEventListener('change', () => {
+                autoSortIfEnabled();
+                broadcastData();
+            });
         });
+
+
     }
 
     let monsterCount = 1;
@@ -592,15 +609,35 @@ let JUGADORES_MEMORIA = JSON.parse(localStorage.getItem('dnd_players')) || [
 
     function duplicateMonster() {
         const container = document.getElementById('monster-form-container');
-        const firstRow = container.querySelector('div');
+        const rows = container.children;
 
-        if (!firstRow) return;
+        if (rows.length === 0) return;
 
-        const baseName = firstRow.querySelector('.monster-name').value.trim();
-        const baseHp = firstRow.querySelector('.monster-hp').value;
-        const baseAc = firstRow.querySelector('.monster-ac').value;
+        const lastRow = rows[rows.length - 1];
 
-        monsterCount++;
+        const lastNameInput = lastRow.querySelector('.monster-name');
+        const baseHp = lastRow.querySelector('.monster-hp').value;
+        const baseAc = lastRow.querySelector('.monster-ac').value;
+
+        if (!lastNameInput) return;
+
+        const lastName = lastNameInput.value.trim();
+
+        // Detectar si tiene número al final
+        const match = lastName.match(/^(.*?)(\s(\d+))?$/);
+
+        let nameBase = lastName;
+        let nextNumber = 2;
+
+        if (match) {
+            nameBase = match[1].trim();
+            const number = parseInt(match[3]);
+            if (!isNaN(number)) {
+                nextNumber = number + 1;
+            }
+        }
+
+        const newName = `${nameBase} ${nextNumber}`;
 
         const row = document.createElement('div');
         row.style.border = "1px solid #ddd";
@@ -609,16 +646,17 @@ let JUGADORES_MEMORIA = JSON.parse(localStorage.getItem('dnd_players')) || [
         row.style.borderRadius = "8px";
 
         row.innerHTML = `
-                <div style="display:flex; gap:6px; align-items:center;">
-                    <input type="text" class="monster-name" value="${baseName ? baseName + ' ' + monsterCount : ''}" style="flex:1;">
-                    <input type="number" class="monster-hp" value="${baseHp}" style="width:60px;">
-                    <input type="number" class="monster-ac" value="${baseAc}" style="width:55px;">
-                    <input type="number" class="monster-init" placeholder="Init" style="width:60px;">
-                </div>
+            <div style="display:flex; gap:6px; align-items:center;">
+                <input type="text" class="monster-name" value="${newName}" style="flex:1;">
+                <input type="number" class="monster-hp" value="${baseHp}" style="width:60px;">
+                <input type="number" class="monster-ac" value="${baseAc}" style="width:55px;">
+                <input type="number" class="monster-init" placeholder="Init" style="width:60px;">
+            </div>
         `;
 
         container.appendChild(row);
     }
+
 
    function confirmMonsterCreation() {
         const container = document.getElementById('monster-form-container');
@@ -669,10 +707,27 @@ let JUGADORES_MEMORIA = JSON.parse(localStorage.getItem('dnd_players')) || [
     function sortInit() {
         const tbody = document.getElementById('table-body');
         const rows = Array.from(tbody.rows);
-        rows.sort((a, b) => (parseInt(b.querySelector('.init-val').value) || 0) - (parseInt(a.querySelector('.init-val').value) || 0));
+        
+        // 1. Identificamos quién tiene el turno actualmente antes de mover nada
+        const activeRow = rows.find(r => r.classList.contains('active-row'));
+
+        // 2. Ordenamos el array de filas
+        rows.sort((a, b) => {
+            const valA = parseInt(a.querySelector('.init-val').value) || 0;
+            const valB = parseInt(b.querySelector('.init-val').value) || 0;
+            return valB - valA;
+        });
+
+        // 3. Volvemos a insertar las filas en el nuevo orden
         rows.forEach(r => tbody.appendChild(r));
-        turnIndex = 0;
-        updateHighlight();
+
+        // 4. Si había un turno activo, recalculamos su posición
+        if (activeRow) {
+            // Filtramos solo los que no están muertos (ya que nextTurn solo cuenta los vivos)
+            const livingRows = Array.from(tbody.rows).filter(r => !r.classList.contains('is-dead'));
+            turnIndex = livingRows.indexOf(activeRow);
+        }
+
         broadcastData();
     }
 
@@ -861,7 +916,6 @@ function broadcastData() {
 </script>
 </body>
 </html>
-
 
 
 
