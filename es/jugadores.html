@@ -2,7 +2,7 @@
 <html lang="es">
 <head>
     <meta charset="UTF-8">
-    <title>Vista de Jugadores - Iniciativa</title>
+    <title>Players View - Iniciative</title>
     <script src="https://unpkg.com/peerjs@1.5.2/dist/peerjs.min.js"></script>
     <style>
         body {
@@ -120,27 +120,27 @@
     </style>
 </head>
 <body>
-<h1>Iniciativa - Ronda <span id="round">1</span></h1>
+<h1>Iniciative - Round <span id="round">1</span></h1>
 
 <div class="connect-box">
-    <input type="text" id="join-id" placeholder="Pegar ID del Master aquí">
-    <button onclick="connectToMaster()">Conectar</button>
+    <input type="text" id="join-id" placeholder="Paste DM ID here">
+    <button onclick="connectToMaster()">Connect</button>
 </div>
 
 
     <table>
         <thead>
             <tr>
-                <th>Combatiente</th>
+                <th>Combatant</th>
                 <th style="text-align:center;">
                     <span style="color:white;">R</span>
                     <span style="color:#f1c40f;">C</span>
-                    <span style="color:#2ecc71;">V</span>
+                    <span style="color:#2ecc71;">A</span>
                     <span style="color:#e74c3c;">D</span>
                 </th>
-                <th>Daño Recibido | Estado</th>
-                <th>Condiciones</th>
-                <th>Efectos</th>
+                <th>Damage Taken | Status</th>
+                <th>Conditions</th>
+                <th>Effects</th>
             </tr>
         </thead>
         <tbody id="player-table"></tbody>
@@ -159,7 +159,7 @@
             activeConn = peer.connect(id, { reliable: true });
 
             activeConn.on('open', () => {
-                document.querySelector('button').innerText = "✅ CONECTADO";
+                document.querySelector('button').innerText = "✅ Connected";
                 document.querySelector('button').style.background = "#19733f";
             });
 
@@ -192,16 +192,16 @@
                         let color = "";
 
                         if (percent < 10) {
-                            estado = "Moribundo";
+                            estado = "Agonizing";
                             color = "#000000";
                         } else if (percent < 50) {
-                            estado = "Sangrando";
+                            estado = "Bloodied";
                             color = "#ff0000";
                         } else if (percent < 100) {
-                            estado = "Herido";
+                            estado = "Wounded";
                             color = "#f1c40f";
                         } else {
-                            estado = "Ileso";
+                            estado = "Unharmed";
                             color = "#19733f";
                         }
 
@@ -223,7 +223,7 @@
                     <td style="text-align:center;">
                         ${c.checks.r ? '<span style="color:white; font-size:18px;">●</span>' : ''}
                         ${c.checks.c ? '<span style="color:#f1c40f; font-size:18px;">●</span>' : ''}
-                        ${c.checks.a ? '<span style="color:#2ecc71; font-size:18px;">●</span>' : ''}
+                        ${c.checks.a ? '<span style="color:#19733f; font-size:18px;">●</span>' : ''}
                         ${c.checks.d ? '<span style="color:#e74c3c; font-size:18px;">●</span>' : ''}
                     </td>
 
