@@ -6,28 +6,47 @@
     <title>DnD Tracker - Master Edition</title>
     <script src="https://unpkg.com/peerjs@1.5.2/dist/peerjs.min.js"></script>
     <style>
-        :root { --primary: #8b0000; --bg: #f8f9fa; --player-row: #e3f2fd; --monster-row: #ffffff; }
-        body { 
-            font-family: 'Segoe UI', system-ui, sans-serif; 
-            background: var(--bg); 
-            padding: 15px; 
-            margin: 0; 
+        :root {  --player-row: #34495e; --monster-row: #  42586e; }
+
+        body {
+            margin: 0;
+            font-family: 'Cinzel', serif;
+
+            background: radial-gradient(
+                circle at center,
+                #1f1813 0%,
+                #16110d 60%,
+                #0f0b08 100%
+            );
+
+            color: #f4e4bc;
+            padding: 20px 20px 40px 20px;
+            box-sizing: border-box;
         }
+        body::before {
+            content: "";
+            position: fixed;
+            inset: 0;
+            background-image: url("https://www.transparenttextures.com/patterns/old-map.png");
+            opacity: 0.06;
+            pointer-events: none;
+        }
+/*cabecera de botones */
         .header { 
             display: flex; 
             justify-content: space-between; 
             align-items: center; 
             margin-bottom: 20px; 
-            background: white; 
-            padding: 15px; 
+            background: transparent; 
+            padding: 15px 60px; 
             border-radius: 8px; 
-            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+            box-shadow: none;
         }
-        h2 { margin: 0; color: var(--primary); }
+        h2 { margin: 0; }
         .btn { padding: 8px 16px; border: none; border-radius: 5px; cursor: pointer; font-weight: 600; transition: 0.2s; }
         .btn-player { background: #0d6efd; color: white; }
         .btn-monster { background: #dc3545; color: white; }
-        .btn-sort { background: #ffc107; color: black; }
+        .btn-sort { background: #5c4604; color: white; }
         .btn-next { background: #198754; color: white; padding: 0 25px; font-size: 1.05rem; margin-left: 10px; border: none !important; outline: none; }
         .btn-reset { background: #6c757d; color: white; 
         }
@@ -66,8 +85,7 @@
         /* El botón Reset específico */
         .btn-reset {
             background-color: #6c757d;
-            color: white;
-            order: -1; /* Esto lo mueve al principio (izquierda) si el padre es flex */
+            color: white; 
         }
         
 /* AJUSTE COLUMNA INICIATIVA */
@@ -116,26 +134,26 @@
         }
 
 /* Específicamente para la Vida y CA para que no pierdan su color */
-        .hp-val { color: #27ae60; width: 45px; }
-        .ca-val { color: #555; width: 35px; }
+        .hp-val { color: #1c9e62; width: 45px; }
+        .ca-val { color: #989fa6; width: 35px; }
         .init-val { 
             width: 40px; 
-            color: #333; 
+            color: #fff; 
             padding: 2px 4px !important;
             height: 24px;
         }
 
         th { 
-            background: #343a40; 
-            color: white; 
-            padding: 4px 10px !important; 
-            font-size: 0.8em; 
+            background: #1a252f; 
+            color: #f4e4bc; 
+            padding: 10px 10px !important; 
+            font-size: 1.1em; 
             text-transform: uppercase; 
             border-right: 1px solid rgba(0,0,0,0.08); 
             white-space: nowrap;
         }
         td { 
-            border-bottom: 1px solid #dee2e6; 
+            border-bottom: 1px solid #465c71; 
             padding: 4px 10px !important; 
             text-align: center; 
             vertical-align: middle; 
@@ -144,11 +162,10 @@
         .row-player { background-color: var(--player-row); }
         .row-monster { background-color: var(--monster-row); }
         input[type="text"], input[type="number"] { 
-            padding: 6px; 
-            border: 1px solid #ced4da; 
+            padding: 6px;  
             border-radius: 4px; 
         }
-        .name-input { width: 180px; font-weight: bold; background: transparent; border: none;  }
+        .name-input { width: 180px; font-weight: bold; background: transparent; border: none; color:white; }
         
 /* Contenedor para que el icono y el número estén alineados */
 /* Esto fuerza a que el contenido de la celda no se divida en dos líneas */
@@ -183,14 +200,14 @@
 
 /* Color especial cuando enfocas el HP (Verde vida) */
         .hp-val:focus {
-            border-color: #27ae60;
+            border-color: #1c9e62;
             outline: none;
             box-shadow: 0 0 5px rgba(39, 174, 96, 0.3);
         }
 
 /* Color especial cuando enfocas la CA (Azul armadura) */
         .ca-val:focus {
-            border-color: #2980b9;
+            border-color: #989fa6;
             outline: none;
             box-shadow: 0 0 5px rgba(41, 128, 185, 0.3);
         }
@@ -315,7 +332,7 @@
     <div style="display: flex; gap: 10px; align-items: center;">
         <button class="btn btn-next" onclick="nextTurn()">Siguiente ⮕</button>
         <button class="btn btn-reset" onclick="resetCombat()">Reset</button>
-        <button class="btn" style="background: #23BAC4 !important; color: white;" onclick="openPlayersModal()">👥 Gestionar Jugadores</button>
+        <button class="btn" style="background: #0f595e !important; color: white;" onclick="openPlayersModal()">👥 Gestionar Jugadores</button>
         <button class="btn" style="background: #8e44ad; color: white;" onclick="importarJugadores()">📥 Importar Jugadores</button>
         <button class="btn btn-player" onclick="addRow('', '', '', 0, true)">+ Jugador</button>
         <button class="btn btn-monster" onclick="openMonsterModal()">+ Monstruo</button>
@@ -333,7 +350,7 @@
             <th style="width: 60px;">Inic.</th>
             <th>Nombre</th>
             <th style="width: 140px;">Vida / CA</th>
-            <th style="width: 130px;">R | C | V | D</th>
+            <th style="width: 130px;">R | C | A | D</th>
             <th style="width: 220px;">Condiciones</th>
             <th style="width: 220px;">Efectos</th>
             <th style="width: 80px;">Acción</th>
@@ -916,7 +933,6 @@ function broadcastData() {
 </script>
 </body>
 </html>
-
 
 
 
