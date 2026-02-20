@@ -5,15 +5,59 @@
     <title>Vista de Jugadores - Iniciativa</title>
     <script src="https://unpkg.com/peerjs@1.5.2/dist/peerjs.min.js"></script>
     <style>
-        body { font-family: sans-serif; background: #2c3e50; color: white; padding: 20px; }
+        body {
+            margin: 0;
+            font-family: 'Cinzel', serif;
+
+            background: radial-gradient(
+                circle at center,
+                #1f1813 0%,
+                #16110d 60%,
+                #0f0b08 100%
+            );
+
+            color: #f4e4bc;
+            padding: 20px 20px 40px 20px;
+            box-sizing: border-box;
+        }
+        body::before {
+            content: "";
+            position: fixed;
+            inset: 0;
+            background-image: url("https://www.transparenttextures.com/patterns/old-map.png");
+            opacity: 0.06;
+            pointer-events: none;
+        }
+
         table { width: 100%; border-collapse: collapse; background: #34495e; border-radius: 10px; overflow: hidden; }
         th, td { 
-            padding: 15px; 
+            padding: 15px;
             border-bottom: 1px solid #465c71; 
         }
 
+/* Centrar la primera columna (R C A D) */
+        th:nth-child(1),
+        td:nth-child(1) {
+            text-align: center;
+        }
+
+/* Centrar la segunda columna (R C A D) */
         th:nth-child(2),
         td:nth-child(2) {
+            text-align: center;
+        }
+
+        /* Centrar la columna de daño y estado si quieres */
+        th:nth-child(3),
+        td:nth-child(3) {
+            text-align: center;
+        }
+
+        /* Opcional: centrar la columna de condiciones y efectos */
+        th:nth-child(4),
+        td:nth-child(4),
+        th:nth-child(5),
+        td:nth-child(5) {
             text-align: center;
         }
 
@@ -22,12 +66,67 @@
         .dead { opacity: 0.3; filter: grayscale(1); }
         .tag { display: inline-block; background: #2980b9; padding: 2px 8px; border-radius: 10px; font-size: 0.8em; margin: 2px; }
         .status-pill { padding: 4px 10px; border-radius: 5px; font-weight: bold; font-size: 0.8em; }
+
+        .connect-box {
+            margin: 16px 0 16px 0; /* arriba, derecha, abajo, izquierda */
+            display: flex;
+            gap: 8px;
+            align-items: center;
+        }
+        button {
+            background: linear-gradient(135deg, #3a2f28, #241c17);
+            border: 1px solid #3a2f28;
+            color: #f4e4bc;
+            padding: 8px 14px;
+            border-radius: 6px;
+            font-family: 'Cinzel', serif;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.2s ease;
+        }
+
+        button:hover {
+            border-color: #840ff1;
+            box-shadow: 0 0 10px rgba(132, 15, 241, 0.5);
+            transform: translateY(-1px);
+        }
+
+        button:active {
+            transform: translateY(0);
+        }
+        input {
+            background: #241c17;
+            border: 1px solid #3a2f28;
+            color: #f4e4bc;
+            padding: 8px 12px;
+            border-radius: 6px;
+            font-family: 'Cinzel', serif;
+            font-size: 0.9rem;
+            outline: none;
+            transition: border 0.2s ease, box-shadow 0.2s ease;
+        }
+
+        input::placeholder {
+            color: #a89c84;
+        }
+
+        input:focus {
+            border-color: #840ff1;
+            box-shadow: 0 0 8px rgba(132, 15, 241, 0.4);
+        }
+
+
+
     </style>
 </head>
 <body>
-    <h1>Iniciativa - Ronda <span id="round">1</span></h1>
+<h1>Iniciativa - Ronda <span id="round">1</span></h1>
+
+<div class="connect-box">
     <input type="text" id="join-id" placeholder="Pegar ID del Master aquí">
     <button onclick="connectToMaster()">Conectar</button>
+</div>
+
 
     <table>
         <thead>
@@ -36,7 +135,7 @@
                 <th style="text-align:center;">
                     <span style="color:white;">R</span>
                     <span style="color:#f1c40f;">C</span>
-                    <span style="color:#2ecc71;">V</span>
+                    <span style="color:#2ecc71;">A</span>
                     <span style="color:#e74c3c;">D</span>
                 </th>
                 <th>Daño Recibido | Estado</th>
@@ -61,7 +160,7 @@
 
             activeConn.on('open', () => {
                 document.querySelector('button').innerText = "✅ CONECTADO";
-                document.querySelector('button').style.background = "#27ae60";
+                document.querySelector('button').style.background = "#19733f";
             });
 
             activeConn.on('data', (data) => {
@@ -103,7 +202,7 @@
                             color = "#f1c40f";
                         } else {
                             estado = "Ileso";
-                            color = "#27ae60";
+                            color = "#19733f";
                         }
 
                         hpInfo = `
